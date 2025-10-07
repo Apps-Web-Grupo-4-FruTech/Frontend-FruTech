@@ -1,0 +1,54 @@
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "manageCrops": "Manage Crops",
+    "myFields": "My Fields",
+    "myTasks": "My Tasks",
+    "community": "Community"
+  },
+  "header": {
+    "profile": "Profile",
+    "logout": "Log Out"
+  },
+  "profile": {
+    "title": "My Profile",
+    "personalInfo": "Personal Information",
+    "changePassword": "Change Password",
+    "settings": "Settings",
+    "name": "Name",
+    "email": "E-mail",
+    "phoneNumber": "Phone Number",
+    "identityDocument": "Identity Document",
+    "editInfo": "Edit Information",
+    "saveChanges": "Save Changes",
+    "cancel": "Cancel",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "notifications": "Notifications",
+    "location": "Location",
+    "logout": "Log Out",
+    "deleteAccount": "Delete Account",
+    "deleteConfirmHeader": "Deletion Confirmation",
+    "deleteConfirmMessage": "Are you sure you want to delete your account? This action is irreversible.",
+    "deleteAccept": "Yes, delete",
+    "deleteReject": "No, cancel"
+  },
+  "toast": {
+    "profileUpdated": "Profile updated.",
+    "passwordChanged": "Password changed.",
+    "logoutSuccess": "You have logged out successfully.",
+    "accountDeleted": "Account deleted.",
+    "errorProfileUpdate": "Could not update profile.",
+    "errorPasswordChange": "Could not change password.",
+    "errorDeleteAccount": "Could not delete account."
+  },
+  "errors": {
+    "nameLength": "Name must be at least 3 characters long.",
+    "phoneDigits": "Phone number must have 9 digits.",
+    "documentDigits": "Document must have 8 digits.",
+    "requiredCurrentPass": "Current password is required.",
+    "newPassLength": "New password must be at least 8 characters.",
+    "passwordsDontMatch": "Passwords do not match."
+  }
+}

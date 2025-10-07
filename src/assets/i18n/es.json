@@ -1,0 +1,54 @@
+{
+  "sidebar": {
+    "dashboard": "Panel de Control",
+    "manageCrops": "Gestionar Cultivos",
+    "myFields": "Mis Campos",
+    "myTasks": "Mis Tareas",
+    "community": "Comunidad"
+  },
+  "header": {
+    "profile": "Perfil",
+    "logout": "Cerrar Sesión"
+  },
+  "profile": {
+    "title": "Mi Perfil",
+    "personalInfo": "Información personal",
+    "changePassword": "Cambiar contraseña",
+    "settings": "Ajustes",
+    "name": "Nombre",
+    "email": "E-mail",
+    "phoneNumber": "Número de teléfono",
+    "identityDocument": "Documento de identidad",
+    "editInfo": "Editar información",
+    "saveChanges": "Guardar cambios",
+    "cancel": "Cancelar",
+    "currentPassword": "Contraseña actual",
+    "newPassword": "Nueva contraseña",
+    "confirmNewPassword": "Confirmar nueva contraseña",
+    "notifications": "Notificaciones",
+    "location": "Ubicación",
+    "logout": "Cerrar sesión",
+    "deleteAccount": "Eliminar cuenta",
+    "deleteConfirmHeader": "Confirmación de eliminación",
+    "deleteConfirmMessage": "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción es irreversible.",
+    "deleteAccept": "Sí, eliminar",
+    "deleteReject": "No, cancelar"
+  },
+  "toast": {
+    "profileUpdated": "Perfil actualizado.",
+    "passwordChanged": "Contraseña cambiada.",
+    "logoutSuccess": "Has cerrado sesión exitosamente.",
+    "accountDeleted": "Cuenta eliminada.",
+    "errorProfileUpdate": "No se pudo actualizar el perfil.",
+    "errorPasswordChange": "No se pudo cambiar la contraseña.",
+    "errorDeleteAccount": "No se pudo eliminar la cuenta."
+  },
+  "errors": {
+    "nameLength": "El nombre debe tener al menos 3 caracteres.",
+    "phoneDigits": "El teléfono debe tener 9 dígitos.",
+    "documentDigits": "El documento debe tener 8 dígitos.",
+    "requiredCurrentPass": "La contraseña actual es requerida.",
+    "newPassLength": "La nueva contraseña debe tener al menos 8 caracteres.",
+    "passwordsDontMatch": "Las contraseñas no coinciden."
+  }
+}
