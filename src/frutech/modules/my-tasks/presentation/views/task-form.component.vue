@@ -124,7 +124,6 @@ const handleSubmit = () => {
   }
 
   emit('submit', { ...formData.value });
-  resetForm();
 };
 
 const handleCancel = () => {

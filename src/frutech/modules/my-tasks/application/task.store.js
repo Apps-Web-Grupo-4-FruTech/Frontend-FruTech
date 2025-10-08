@@ -68,9 +68,9 @@ export const useTaskStore = defineStore('tasks', () => {
         isLoading.value = true;
         error.value = null;
         try {
-            // Create a new task entity with a temporary ID
-            const newId = tasks.value.length > 0 
-                ? Math.max(...tasks.value.map(t => t.id)) + 1 
+            const allTasks = await repository.getAll();
+            const newId = allTasks.length > 0 
+                ? Math.max(...allTasks.map(t => t.id)) + 1 
                 : 1;
             
             const taskEntity = new Task({
@@ -85,7 +85,7 @@ export const useTaskStore = defineStore('tasks', () => {
             tasks.value.push(assembler.toDTO(createdEntity));
         } catch (err) {
             error.value = 'Could not create task.';
-            console.error(err);
+            console.error('Create task error:', err);
             throw err;
         } finally {
             isLoading.value = false;

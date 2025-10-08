@@ -93,12 +93,14 @@ const props = defineProps({
 defineEmits(['toggle-task', 'edit-task', 'delete-task']);
 
 const sortedTasks = computed(() => {
-  return [...props.tasks].sort((a, b) => a.daysUntilDue - b.daysUntilDue);
+  return [...props.tasks].sort((a, b) => {
+    return (a.daysUntilDue || 0) - (b.daysUntilDue || 0);
+  });
 });
 
 const getDateSeverity = (task) => {
   if (task.isOverdue) return 'danger';
-  if (task.daysUntilDue <= 3) return 'warning';
+  if (task.daysUntilDue !== undefined && task.daysUntilDue <= 3) return 'warning';
   return 'success';
 };
 </script>

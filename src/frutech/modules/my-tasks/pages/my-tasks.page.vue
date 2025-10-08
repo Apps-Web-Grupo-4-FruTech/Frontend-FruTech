@@ -111,7 +111,8 @@ const handleSaveTask = async (taskData) => {
     } else {
       await taskStore.createTask(taskData);
     }
-    handleCancelDialog();
+    showTaskDialog.value = false;
+    selectedTask.value = null;
   } catch (error) {
     console.error('Error saving task:', error);
   }
