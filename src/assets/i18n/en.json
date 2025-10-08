@@ -1,4 +1,20 @@
 {
+  "dashboard": {
+    "myCrops": "My Crops",
+    "recentTasks": "Recent Tasks",
+    "cropName": "Crop Name",
+    "task": "Task",
+    "deadline": "Deadline",
+    "actions": "Actions",
+    "lastRecommendations": "Last Recommendations",
+    "irrigationReview": "Irrigation Review",
+    "pestAlert": "Pest Alert",
+    "fertilizationNeeded": "Fertilization Needed",
+    "addNewCrop": "Add New Crop",
+    "view": "View",
+    "edit": "Edit"
+  },
+
   "sidebar": {
     "dashboard": "Dashboard",
     "manageCrops": "Manage Crops",

@@ -1,4 +1,20 @@
 {
+  "dashboard": {
+    "myCrops": "Mis Cultivos",
+    "recentTasks": "Tareas Recientes",
+    "cropName": "Nombre del Cultivo",
+    "task": "Tarea",
+    "deadline": "Fecha Límite",
+    "actions": "Acciones",
+    "lastRecommendations": "Últimas Recomendaciones",
+    "irrigationReview": "Revisión de Riego",
+    "pestAlert": "Alerta de Plaga",
+    "fertilizationNeeded": "Fertilización Necesaria",
+    "addNewCrop": "Añadir Nuevo Cultivo",
+    "view": "Ver",
+    "edit": "Editar"
+  },
+
   "sidebar": {
     "dashboard": "Panel de Control",
     "manageCrops": "Gestionar Cultivos",
