@@ -5,7 +5,7 @@
     </template>
     <template #content>
       <p>
-        Conéctate con otros agricultores, comparte consejos y participa en discusiones.
+        Real feedback from real users who have transformed their workflow with our application. Join thousands of satisfied customers worldwide.
       </p>
     </template>
   </Card>

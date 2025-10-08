@@ -324,8 +324,7 @@
       "id": 4,
       "description": "Investigate yellowing leaves in sector B.",
       "due_date": "09/10",
-      "field": "Parcela de Maíz La Serrana",
-      "completed": false
+      "field": "Parcela de Maíz La Serrana"
     },
     {
       "id": 5,
