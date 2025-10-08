@@ -39,6 +39,16 @@ const routes = [
                 component: () => import('@/frutech/modules/my-fields/pages/my-fields.page.vue'),
             },
             {
+                path: '/fields/new',
+                name: 'field-new',
+                component: () => import('@/frutech/modules/my-fields/pages/field-new.page.vue'),
+            },
+            {
+                path: '/fields/:id',
+                name: 'field-detail',
+                component: () => import('@/frutech/modules/my-fields/pages/field-detail.page.vue'),
+            },
+            {
                 path: 'my-tasks',
                 name: 'MyTasks',
                 component: () => import('@/frutech/modules/my-tasks/pages/my-tasks.page.vue'),

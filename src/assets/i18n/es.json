@@ -131,5 +131,44 @@
     "wateringPlaceholder": "Frecuencia de riego",
     "cancel": "Cancelar",
     "save": "Guardar"
+  },
+  "fields": {
+    "title": "Mis campos",
+    "description": "¡ Administra tus campos en esta sección !"
+  },
+  "field_detail": {
+    "location": "Localización: ",
+    "field_size": "Tamaño del campo: ",
+    "crop": "Cultivo: ",
+    "days_since": "Dias desde el plantado: ",
+    "planting_date": "Fecha de plantado: ",
+    "expected": "Fecha esperada de cosecha: ",
+    "soil_type": "Tipo de suelo: ",
+    "watering": "Regado: ",
+    "sunlight": "Luz del sol: ",
+    "progress": {
+      "title": "Progreso e Historia",
+      "watered": "Regado el: ",
+      "fertilized": "Fertilziado el: ",
+      "pest": "Inspecion de pestes el:"
+    },
+    "tasks": "Mis Tareas"
+  },
+  "new_field": {
+    "title": "Nuevo Campo",
+    "description": "¡Añade un nuevo campo a tu lista!",
+    "image": "Click para subir su imagen",
+    "name": "Nombre del campo",
+    "location": "Localizacion del campo",
+    "size": "Tamaño del campo",
+    "cancel": "Cancelar",
+    "save": "Subir",
+    "saving": "Subiendo"
+  },
+  "modifications": {
+    "progress": "Editar Progreso e Historia",
+    "new_task": "Añadir Nueva Tarea",
+    "date": "Fecha Limite",
+    "description": "Descripcion de la Tarea"
   }
 }

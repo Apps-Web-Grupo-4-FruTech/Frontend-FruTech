@@ -131,5 +131,44 @@
     "wateringPlaceholder": "Watering frequency",
     "cancel": "Cancel",
     "save": "Save"
+  },
+  "fields": {
+    "title": "My fields",
+    "description": "Manage your fields in this section!"
+  },
+  "field_detail": {
+    "location": "Location: ",
+    "field_size": "Field Size: ",
+    "crop": "Crop: ",
+    "days_since": "Days since planting: ",
+    "planting_date": "Planting Date: ",
+    "expected": "Expected Harvest Date: ",
+    "soil_type": "Soil Type: ",
+    "watering": "Watering: ",
+    "sunlight": "Sunlight: ",
+    "progress": {
+      "title": "Progress & History",
+      "watered": "Watered: ",
+      "fertilized": "Fertilized: ",
+      "pest": "Pest Inspection: "
+    },
+    "tasks": "My Tasks"
+  },
+  "new_field": {
+    "title": "New Field",
+    "description": "Add a new field to your list!",
+    "image": "Click to upload image",
+    "name": "Field Name",
+    "location": "Location",
+    "size": "Field Size",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving"
+  },
+  "modifications": {
+    "progress": "Edit Progress & History",
+    "new_task": "Add New Task",
+    "date": "Due Date",
+    "description": "Task Description"
   }
 }
