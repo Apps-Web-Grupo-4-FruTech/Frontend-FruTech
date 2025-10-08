@@ -29,6 +29,11 @@ const routes = [
                 component: () => import('@/frutech/modules/manage-crops/pages/manage-crops.page.vue'),
             },
             {
+                path: 'manage-crops/new',
+                name: 'ManageCropsNew',
+                component: () => import('@/frutech/modules/manage-crops/pages/register-crop.page.vue'),
+            },
+            {
                 path: 'my-fields',
                 name: 'MyFields',
                 component: () => import('@/frutech/modules/my-fields/pages/my-fields.page.vue'),

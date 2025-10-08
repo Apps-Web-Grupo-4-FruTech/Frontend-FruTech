@@ -88,6 +88,15 @@
       "harvest_date": "15/12",
       "field": "Campo de Zanahorias Beta",
       "status": "Healthy"
+    },
+    {
+      "id": 6,
+      "title": "maiz",
+      "planting_date": "2025-03-15",
+      "harvest_date": "2025-07-20",
+      "field": "Campo de Granos, Los Grandes",
+      "status": "Critical",
+      "days": "127"
     }
   ],
   "fields": [
