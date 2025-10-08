@@ -9,11 +9,13 @@
 </template>
 
 <script setup>
-defineProps({
-  commentsCount: {
-    type: Number,
-    default: 0
-  }
+import { computed } from 'vue';
+import { useCommunityStore } from '../../application/community.store.js';
+
+const communityStore = useCommunityStore();
+
+const commentsCount = computed(() => {
+  return communityStore.getRecommendations.length;
 });
 </script>
 
@@ -25,10 +27,13 @@ defineProps({
   font-size: 2.2rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
+  color: #2c3e50;
 }
 .subtitle {
   color: #6c757d;
   margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  line-height: 1.6;
 }
 .comments-count {
   font-size: 1rem;
