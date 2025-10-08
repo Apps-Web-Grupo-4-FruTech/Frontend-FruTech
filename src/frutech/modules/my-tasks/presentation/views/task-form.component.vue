@@ -63,6 +63,13 @@ import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import Dropdown from 'primevue/dropdown';
 
+/**
+ * TaskForm Component
+ * This component provides a form for managing tasks.
+ * It supports both creating new tasks and editing existing ones.
+ * It emits 'submit' when the form is submitted and 'cancel' when the form is closed.
+ */
+
 const props = defineProps({
   visible: {
     type: Boolean,

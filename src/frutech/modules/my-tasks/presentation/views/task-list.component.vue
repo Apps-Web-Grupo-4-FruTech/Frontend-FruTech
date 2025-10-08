@@ -1,11 +1,9 @@
 <template>
   <div class="task-list">
-    <!-- Loading State -->
     <div v-if="isLoading" class="loading-container">
       <ProgressSpinner />
     </div>
 
-    <!-- Tasks Table -->
     <div v-else-if="sortedTasks.length > 0" class="tasks-table">
       <div class="table-header">
         <div class="col-description">Description</div>
@@ -60,10 +58,9 @@
       </div>
     </div>
 
-    <!-- Empty State -->
     <div v-else class="empty-state">
       <i class="pi pi-inbox" style="font-size: 3rem; color: var(--surface-400);"></i>
-      <p>No hay tareas pendientes</p>
+      <p>No tasks found.</p>
     </div>
   </div>
 </template>
@@ -74,6 +71,13 @@ import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import Tag from 'primevue/tag';
 import ProgressSpinner from 'primevue/progressspinner';
+
+/**
+ * TaskList Component
+ * This component displays a list of tasks with options to toggle completion,
+ * edit, and delete each task. It also handles loading and empty states.
+ * It emits events for task actions to be handled by the parent component.
+ */
 
 const props = defineProps({
   tasks: {

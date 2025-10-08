@@ -12,10 +12,9 @@
       </template>
       <template #content>
         <p class="description">
-          Organiza tus tareas diarias. Marca las tareas completadas y añade nuevas.
+          Organize your daily tasks. Mark completed tasks and add new ones.
         </p>
 
-        <!-- Task List Component -->
         <TaskList 
           :tasks="taskStore.sortedTasks"
           :is-loading="taskStore.isLoading"
@@ -24,10 +23,9 @@
           @delete-task="handleDeleteTask"
         />
 
-        <!-- Add New Task Button -->
         <div class="add-task-section">
           <Button 
-            label="+ New Task" 
+            label="New Task" 
             icon="pi pi-plus"
             severity="success"
             @click="showTaskDialog = true"
@@ -36,7 +34,6 @@
       </template>
     </Card>
 
-    <!-- Task Form Dialog -->
     <TaskForm 
       v-model:visible="showTaskDialog"
       :task="selectedTask"
@@ -45,7 +42,6 @@
       @cancel="handleCancelDialog"
     />
 
-    <!-- Delete Confirmation Dialog -->
     <DeleteTaskDialog 
       v-model:visible="showDeleteDialog"
       @confirm="handleConfirmDelete"
@@ -62,6 +58,14 @@ import Button from 'primevue/button';
 import TaskList from '../presentation/views/task-list.component.vue';
 import TaskForm from '../presentation/views/task-form.component.vue';
 import DeleteTaskDialog from '../presentation/views/delete-task-dialog.component.vue';
+
+
+/**
+ * MyTasks Page Component
+ * This component serves as the main page for managing user tasks.
+ * It integrates the TaskList, TaskForm, and DeleteTaskDialog components,
+ * and interacts with the TaskStore for state management.
+ */
 
 const taskStore = useTaskStore();
 
@@ -103,10 +107,8 @@ const handleDeleteTask = (task) => {
 const handleSaveTask = async (taskData) => {
   try {
     if (selectedTask.value) {
-      // Update existing task
       await taskStore.updateTask(selectedTask.value.id, taskData);
     } else {
-      // Create new task
       await taskStore.createTask(taskData);
     }
     handleCancelDialog();

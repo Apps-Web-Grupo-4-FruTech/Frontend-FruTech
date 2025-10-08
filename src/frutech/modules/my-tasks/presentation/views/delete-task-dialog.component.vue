@@ -21,6 +21,12 @@
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 
+/**
+ * DeleteTaskDialog Component
+ * This component provides a confirmation dialog for deleting a task.
+ * It emits 'confirm' when the user confirms deletion and 'cancel' when the user cancels.
+ */
+
 defineProps({
   visible: {
     type: Boolean,
