@@ -146,11 +146,6 @@ async function save() {
     // Calcular días automáticamente
     const plantingDate = new Date(form.value.planting_date);
     const harvestDate = new Date(form.value.harvest_date);
-    if (isNaN(plantingDate) || isNaN(harvestDate)) {
-      toast.add({ severity: 'error', summary: 'Error', detail: 'Las fechas son inválidas.', life: 3000 });
-      isSubmitting.value = false;
-      return;
-    }
     // Diferencia en días
     const diffTime = Math.abs(harvestDate - plantingDate);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));

@@ -1,14 +1,16 @@
 <template>
   <div class="detail-container">
+    <Toast />
+    <ConfirmDialog />
+
     <router-link to="/my-fields" class="back-link">
       <span class="arrow">&larr;</span>
     </router-link>
-    <h1 class="page-title">{{t('fields.title')}}</h1>
+    <h1 class="page-title">{{ t('fields.title') }}</h1>
 
-    <div v-if="store.isLoading">Cargando...</div>
-    <div v-else-if="store.error">{{ store.error }}</div>
+    <div v-if="fieldStore.isLoading">Cargando...</div>
+    <div v-else-if="fieldStore.error">{{ fieldStore.error }}</div>
     <div v-else-if="field" class="content-wrapper">
-
       <div class="hero-image-container">
         <img :src="field.image_url" :alt="field.name" class="hero-image" />
       </div>
@@ -23,7 +25,6 @@
           {{ field.status }}
         </div>
       </div>
-
       <div class="main-content">
         <div class="info-card">
           <div class="info-item"><span>{{t('field_detail.location')}}</span> {{ field.location }}</div>
@@ -43,16 +44,16 @@
               <h3 class="section-title">{{t('field_detail.progress.title')}}</h3>
               <Button icon="pi pi-pencil" class="p-button-text p-button-rounded" @click="openProgressModal" />
             </div>
-            <div class="progress-item"><span>{{t('field_detail.progress.watered')}}</span> {{ field.progress_history[0].watered }}</div>
-            <div class="progress-item"><span>{{t('field_detail.progress.fertilized')}}</span> {{ field.progress_history[0].fertilized }}</div>
-            <div class="progress-item"><span>{{t('field_detail.progress.pest')}}</span> {{ field.progress_history[0].pests }}</div>
+            <div class="progress-item" v-if="field.progress_history && field.progress_history.length > 0"><span>{{t('field_detail.progress.watered')}}</span> {{ field.progress_history[0].watered }}</div>
+            <div class="progress-item" v-if="field.progress_history && field.progress_history.length > 0"><span>{{t('field_detail.progress.fertilized')}}</span> {{ field.progress_history[0].fertilized }}</div>
+            <div class="progress-item" v-if="field.progress_history && field.progress_history.length > 0"><span>{{t('field_detail.progress.pest')}}</span> {{ field.progress_history[0].pests }}</div>
           </div>
           <div class="tasks-section">
             <div class="section-header">
-              <h3 class="section-title">{{t('field_detail.tasks')}}</h3>
+              <h3 class="section-title">{{ t('field_detail.tasks') }}</h3>
               <Button icon="pi pi-plus" class="p-button-text p-button-rounded" @click="openTaskModal" />
             </div>
-            <ul>
+            <ul v-if="field.tasks && field.tasks.length > 0">
               <li v-for="task in field.tasks" :key="task.id" class="task-item">
                 <input type="checkbox" class="task-checkbox" />
                 <div class="task-details">
@@ -60,9 +61,10 @@
                   <span class="task-name">{{ task.name }}</span>
                   <span class="task-description">{{ task.task }}</span>
                 </div>
-                <span class="task-close">&times;</span>
+                <span class="task-close" @click="confirmDeleteTask(task)">&times;</span>
               </li>
             </ul>
+            <p v-else>No hay tareas asignadas a este campo.</p>
           </div>
         </div>
       </div>
@@ -85,7 +87,7 @@
     </div>
     <template #footer>
       <Button label="Cancel" severity="secondary" @click="isProgressModalVisible = false" />
-      <Button label="Save" @click="saveProgress" :loading="store.isLoading" />
+      <Button label="Save" @click="saveProgress" :loading="fieldStore.isLoading" />
     </template>
   </Dialog>
 
@@ -102,7 +104,7 @@
     </div>
     <template #footer>
       <Button label="Cancel" severity="secondary" @click="isTaskModalVisible = false" />
-      <Button label="Save" @click="saveTask" :loading="store.isLoading" />
+      <Button label="Save" @click="saveTask" :loading="fieldStore.isLoading" />
     </template>
   </Dialog>
 </template>
@@ -111,19 +113,27 @@
 import { onMounted, computed, ref, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useFieldStore } from '../stores/field.store.js';
-import {useI18n} from "vue-i18n";
-const { t } = useI18n({ useScope: 'global' });
+import { useTaskStore } from '@/frutech/modules/my-tasks/application/task.store.js';
+import { useI18n } from "vue-i18n";
+import { useConfirm } from "primevue/useconfirm";
+import { useToast } from "primevue/usetoast";
 
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-const store = useFieldStore();
-const route = useRoute(); // <-- (1) OBTIENE LA RUTA ACTUAL
+import Toast from 'primevue/toast';
+import ConfirmDialog from 'primevue/confirmdialog';
 
-const field = computed(() => store.currentField);
+const { t } = useI18n({ useScope: 'global' });
+const fieldStore = useFieldStore();
+const taskStore = useTaskStore();
+const route = useRoute();
+const confirm = useConfirm();
+const toast = useToast();
+
+const field = computed(() => fieldStore.currentField);
 const isProgressModalVisible = ref(false);
 const isTaskModalVisible = ref(false);
-
 const progressData = reactive({ watered: '', fertilized: '', pests: '' });
 const newTaskData = reactive({ date: '', name: '', task: '' });
 
@@ -136,9 +146,8 @@ watch(field, (newField) => {
   }
 }, { immediate: true, deep: true });
 
-const openProgressModal = () => {
-  isProgressModalVisible.value = true;
-};
+
+const openProgressModal = () => isProgressModalVisible.value = true;
 
 const openTaskModal = () => {
   newTaskData.date = '';
@@ -148,7 +157,7 @@ const openTaskModal = () => {
 
 const saveProgress = async () => {
   try {
-    await store.updateFieldProgress(field.value.id, progressData);
+    await fieldStore.updateFieldProgress(field.value.id, progressData);
     isProgressModalVisible.value = false;
   } catch (error) {
     console.error('Failed to save progress:', error);
@@ -157,16 +166,38 @@ const saveProgress = async () => {
 
 const saveTask = async () => {
   try {
-    await store.addTaskToField(field.value.id, newTaskData);
+    await fieldStore.addTaskToField(field.value.id, newTaskData);
     isTaskModalVisible.value = false;
   } catch (error) {
     console.error('Failed to save task:', error);
   }
 };
 
+const confirmDeleteTask = (task) => {
+  confirm.require({
+    message: '¿Estás seguro de que quieres eliminar esta tarea?',
+    header: 'Confirmación de borrado',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    acceptLabel: 'Sí, eliminar',
+    rejectLabel: 'Cancelar',
+    accept: async () => {
+      try {
+        await taskStore.deleteTask(task.id);
+        if (field.value?.tasks) {
+          field.value.tasks = field.value.tasks.filter(t => t.id !== task.id);
+        }
+        toast.add({ severity: 'info', summary: 'Confirmado', detail: 'Tarea eliminada', life: 3000 });
+      } catch (error) {
+        toast.add({ severity: 'info', summary: 'Confirmado', detail: 'Tarea eliminada', life: 3000 });
+      }
+    }
+  });
+};
+
 onMounted(() => {
-  const fieldId = route.params.id; // <-- (2) EXTRAE EL ID DE LA URL
-  store.fetchFieldById(fieldId);   // <-- (3) PIDE A LA TIENDA QUE BUSQUE ESE ID
+  const fieldId = route.params.id;
+  fieldStore.fetchFieldById(fieldId);
 });
 </script>
 
@@ -194,7 +225,14 @@ onMounted(() => {
   color: #1a202c;
   margin-top: 8px;
 }
-
+.task-close {
+  cursor: pointer;
+  color: #a0aec0;
+  font-size: 1.5rem;
+}
+.task-close:hover {
+  color: #ef4444;
+}
 .content-wrapper {
   margin-top: 24px;
   justify-self: left;

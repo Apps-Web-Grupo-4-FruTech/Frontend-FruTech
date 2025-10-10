@@ -1,6 +1,9 @@
 import axios from 'axios';
+import apiClient from '@/services/http-common.js';
 import { TaskRepository } from '../domain/repositories/task.repository';
 import { Task } from '../domain/models/task.entity';
+
+const TASK_ENDPOINT = import.meta.env.VITE_TASK_ENDPOINT_PATH;
 
 /**
  * @class TaskApiRepository
@@ -8,20 +11,6 @@ import { Task } from '../domain/models/task.entity';
  * @extends TaskRepository
  */
 export class TaskApiRepository extends TaskRepository {
-    baseURL = 'http://localhost:3000';
-    endpoint = '/task';
-
-    /**
-     * Gets the Axios instance for API calls.
-     */
-    get http() {
-        return axios.create({
-            baseURL: this.baseURL,
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
-    }
 
     /**
      * Maps API data to the Task domain model.
@@ -49,7 +38,6 @@ export class TaskApiRepository extends TaskRepository {
             description: domainData.description,
             due_date: domainData.dueDate,
             field: domainData.field,
-            completed: domainData.completed,
         };
     }
 
@@ -58,13 +46,8 @@ export class TaskApiRepository extends TaskRepository {
      * @returns {Promise<Array<Task>>} Array of task entities.
      */
     async getAll() {
-        try {
-            const response = await this.http.get(this.endpoint);
-            return response.data.map((item) => this.apiToDomain(item));
-        } catch (error) {
-            console.error('Error fetching tasks:', error);
-            throw error;
-        }
+        const response = await apiClient.get(TASK_ENDPOINT);
+        return response.data.map((item) => this.apiToDomain(item));
     }
 
     /**
@@ -73,13 +56,8 @@ export class TaskApiRepository extends TaskRepository {
      * @returns {Promise<Task>} The task entity.
      */
     async getById(id) {
-        try {
-            const response = await this.http.get(`${this.endpoint}/${id}`);
-            return this.apiToDomain(response.data);
-        } catch (error) {
-            console.error(`Error fetching task ${id}:`, error);
-            throw error;
-        }
+        const response = await apiClient.get(`${TASK_ENDPOINT}/${id}`);
+        return this.apiToDomain(response.data);
     }
 
     /**
@@ -88,14 +66,9 @@ export class TaskApiRepository extends TaskRepository {
      * @returns {Promise<Task>} The created task entity.
      */
     async create(task) {
-        try {
-            const apiData = this.domainToApi(task);
-            const response = await this.http.post(this.endpoint, apiData);
-            return this.apiToDomain(response.data);
-        } catch (error) {
-            console.error('Error creating task:', error);
-            throw error;
-        }
+        const apiData = this.domainToApi(task);
+        const response = await apiClient.post(TASK_ENDPOINT, apiData);
+        return this.apiToDomain(response.data);
     }
 
     /**
@@ -104,14 +77,16 @@ export class TaskApiRepository extends TaskRepository {
      * @returns {Promise<Task>} The updated task entity.
      */
     async update(task) {
-        try {
-            const apiData = this.domainToApi(task);
-            const response = await this.http.put(`${this.endpoint}/${task.id}`, apiData);
-            return this.apiToDomain(response.data);
-        } catch (error) {
-            console.error(`Error updating task ${task.id}:`, error);
-            throw error;
-        }
+        const apiData = this.domainToApi(task);
+        const response = await apiClient.patch(`${TASK_ENDPOINT}/${task.id}`, apiData);
+        return this.apiToDomain(response.data);
+    }
+
+    async updateCompletion(task) {
+        const response = await apiClient.patch(`${TASK_ENDPOINT}/${task.id}`, {
+            completed: task.completed,
+        });
+        return this.apiToDomain(response.data);
     }
 
     /**
@@ -120,11 +95,6 @@ export class TaskApiRepository extends TaskRepository {
      * @returns {Promise<void>}
      */
     async delete(id) {
-        try {
-            await this.http.delete(`${this.endpoint}/${id}`);
-        } catch (error) {
-            console.error(`Error deleting task ${id}:`, error);
-            throw error;
-        }
+        await apiClient.delete(`${TASK_ENDPOINT}/${id}`);
     }
 }

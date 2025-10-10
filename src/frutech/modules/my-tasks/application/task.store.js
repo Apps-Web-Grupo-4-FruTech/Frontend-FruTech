@@ -3,9 +3,11 @@ import { ref, computed } from 'vue';
 import { TaskApiRepository } from '../infrastructure/task-api.repository';
 import { TaskAssembler } from './task.assembler';
 import { Task } from '../domain/models/task.entity';
+import { FieldApiRepository } from "@/frutech/modules/my-fields/infrastructure/field.api-repository.js";
 
 const repository = new TaskApiRepository();
 const assembler = new TaskAssembler();
+const fieldRepository = new FieldApiRepository();
 
 /**
  * @store useTaskStore
@@ -16,15 +18,16 @@ export const useTaskStore = defineStore('tasks', () => {
     const isLoading = ref(false);
     const error = ref(null);
 
-    const taskCount = computed(() => tasks.value.length);
     const completedTasks = computed(() => tasks.value.filter((t) => t.completed));
     const pendingTasks = computed(() => tasks.value.filter((t) => !t.completed));
     const overdueTasks = computed(() => tasks.value.filter((t) => t.isOverdue));
+    const taskCount = computed(() => tasks.value.length);
 
     /**
      * Sorts tasks by due date.
      */
     const sortedTasks = computed(() => {
+        if (!tasks.value.length) return [];
         return [...tasks.value].sort((a, b) => {
             const dateA = parseDueDate(a.dueDate);
             const dateB = parseDueDate(b.dueDate);
@@ -102,16 +105,23 @@ export const useTaskStore = defineStore('tasks', () => {
         error.value = null;
         try {
             const taskEntity = await repository.getById(taskId);
-            taskEntity.updateInformation(
-                dataToUpdate.description,
-                dataToUpdate.dueDate,
-                dataToUpdate.field
-            );
+            taskEntity.updateInformation(dataToUpdate.description, dataToUpdate.dueDate, dataToUpdate.field);
             const updatedEntity = await repository.update(taskEntity);
-            const index = tasks.value.findIndex((t) => t.id === taskId);
-            if (index !== -1) {
-                tasks.value[index] = assembler.toDTO(updatedEntity);
+            const allFields = await fieldRepository.getAllFieldsDetails();
+            const fieldToUpdate = allFields.find(f => f.tasks?.some(t => t.id === taskId));
+            if (fieldToUpdate) {
+                const taskIndex = fieldToUpdate.tasks.findIndex(t => t.id === taskId);
+                if (taskIndex !== -1) {
+                    fieldToUpdate.tasks[taskIndex].task = updatedEntity.description;
+                    fieldToUpdate.tasks[taskIndex].date = updatedEntity.dueDate;
+                    await fieldRepository.updateField(fieldToUpdate.id, { tasks: fieldToUpdate.tasks });
+                }
             }
+            await fieldRepository.updateUpcomingTask(taskId, { task: updatedEntity.description, date: updatedEntity.dueDate });
+
+            const index = tasks.value.findIndex((t) => t.id === taskId);
+            if (index !== -1) tasks.value[index] = assembler.toDTO(updatedEntity);
+
         } catch (err) {
             error.value = 'Could not update task.';
             console.error(err);
@@ -157,8 +167,21 @@ export const useTaskStore = defineStore('tasks', () => {
         isLoading.value = true;
         error.value = null;
         try {
-            await repository.delete(taskId);
+            await Promise.all([
+                repository.delete(taskId),
+                fieldRepository.deleteUpcomingTask(taskId),
+                (async () => {
+                    const allFields = await fieldRepository.getAllFieldsDetails();
+                    const fieldToUpdate = allFields.find(f => f.tasks?.some(t => t.id === taskId));
+                    if (fieldToUpdate) {
+                        const updatedTasks = fieldToUpdate.tasks.filter(t => t.id !== taskId);
+                        await fieldRepository.updateField(fieldToUpdate.id, { tasks: updatedTasks });
+                    }
+                })()
+            ]);
+
             tasks.value = tasks.value.filter((t) => t.id !== taskId);
+
         } catch (err) {
             error.value = 'Could not delete task.';
             console.error(err);

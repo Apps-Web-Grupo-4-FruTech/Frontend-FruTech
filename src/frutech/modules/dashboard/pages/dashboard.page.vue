@@ -13,8 +13,8 @@
         <Card class="preview-fields-card">
           <template #title>
             <div class="flex justify-content-between align-items-center">
-              <h2 class="m-0 text-xl font-semibold">Mis Cultivos</h2>
-              <Button label="Añadir Nuevo Cultivo" icon="pi pi-plus" />
+              <h1 class="m-0">{{ $t('sidebar.dashboard') }}</h1>
+              <Button label="Añadir Nuevo Cultivo" icon="pi pi-plus" @click="goToMyFields" />
             </div>
           </template>
           <template #content>
@@ -30,7 +30,11 @@
 
       <div class="col-12">
         <Card>
-          <template #title><h2 class="m-0 text-xl font-semibold">Tareas Recientes</h2></template>
+          <template #title>
+            <div class="flex justify-content-between align-items-center">
+              <h2 class="m-0 text-xl font-semibold">Tareas Recientes</h2>
+                <Button label="Ver tareas" @click="goToMyTasks" text />
+          </div></template>
           <template #content>
             <DataTable :value="store.dashboardData.upcomingTasks" responsiveLayout="scroll">
               <Column field="name" header="Nombre del Cultivo"></Column>
@@ -38,8 +42,7 @@
               <Column field="date" header="Fecha Límite"></Column>
               <Column header="Acciones">
                 <template #body>
-                  <Button label="Ver" class="p-button-text p-button-sm mr-2" />
-                  <Button label="Editar" class="p-button-text p-button-sm" />
+                  <Checkbox :binary="true" />
                 </template>
               </Column>
             </DataTable>
@@ -65,22 +68,31 @@
 import { onMounted } from 'vue';
 import { useDashboardStore } from '../stores/dashboard.store';
 
-// Componentes de PrimeVue
 import Card from 'primevue/card';
 import Button from 'primevue/button';
 import ProgressSpinner from 'primevue/progressspinner';
 import Message from 'primevue/message';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import { useRouter } from 'vue-router';
+import Checkbox from 'primevue/checkbox';
 
 const store = useDashboardStore();
+const router = useRouter();
 
 onMounted(() => {
-  // Si no hay datos, los buscamos.
   if (!store.dashboardData) {
     store.fetchDashboardData();
   }
 });
+
+const goToMyFields = () => {
+  router.push('/my-fields');
+};
+
+const goToMyTasks = () => {
+  router.push('/my-tasks');
+};
 </script>
 
 <style scoped>

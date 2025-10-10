@@ -7,6 +7,7 @@ const PREVIEW_FIELDS_PATH = import.meta.env.VITE_PREVIEW_FIELDS_ENDPOINT_PATH;
 const CROP_STATUS_PATH = import.meta.env.VITE_CROP_STATUS_ENDPOINT_PATH;
 const FIELDS_PATH = import.meta.env.VITE_FIELDS_ENDPOINT_PATH;
 const TASK_PATH = import.meta.env.VITE_TASK_ENDPOINT_PATH;
+const UPCOMING_TASKS_PATH = import.meta.env.VITE_UPCOMING_TASKS_ENDPOINT_PATH;
 
 export class FieldApiRepository extends IFieldRepository {
     /**
@@ -119,6 +120,39 @@ export class FieldApiRepository extends IFieldRepository {
         } catch (error) {
             console.error('FieldApiRepository addNewTask Error:', error);
             throw error;
+        }
+    }
+    async getAllFieldsDetails() {
+        try {
+            const response = await fetch(`${API_URL}${FIELDS_PATH}`);
+            if (!response.ok) throw new Error('No se pudieron obtener los detalles de los campos.');
+            return await response.json();
+        } catch (error) {
+            console.error('FieldApiRepository getAllFieldsDetails Error:', error);
+            throw error;
+        }
+    }
+    async updateUpcomingTask(taskId, taskData) {
+        try {
+            const response = await fetch(`${API_URL}${UPCOMING_TASKS_PATH}/${taskId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(taskData),
+            });
+            if (response.ok) {
+                return await response.json();
+            }
+        } catch (error) {
+            console.error('FieldApiRepository updateUpcomingTask Error:', error);
+        }
+    }
+    async deleteUpcomingTask(taskId) {
+        try {
+            await fetch(`${API_URL}${UPCOMING_TASKS_PATH}/${taskId}`, {
+                method: 'DELETE',
+            });
+        } catch (error) {
+            console.error('FieldApiRepository deleteUpcomingTask Error:', error);
         }
     }
 }

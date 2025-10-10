@@ -23,21 +23,12 @@
           @delete-task="handleDeleteTask"
         />
 
-        <div class="add-task-section">
-          <Button 
-            label="New Task" 
-            icon="pi pi-plus"
-            severity="success"
-            @click="showTaskDialog = true"
-          />
-        </div>
       </template>
     </Card>
 
     <TaskForm 
       v-model:visible="showTaskDialog"
       :task="selectedTask"
-      :available-fields="availableFields"
       @submit="handleSaveTask"
       @cancel="handleCancelDialog"
     />
@@ -54,10 +45,11 @@
 import { ref, onMounted } from 'vue';
 import { useTaskStore } from '../application/task.store';
 import Card from 'primevue/card';
-import Button from 'primevue/button';
 import TaskList from '../presentation/views/task-list.component.vue';
 import TaskForm from '../presentation/views/task-form.component.vue';
 import DeleteTaskDialog from '../presentation/views/delete-task-dialog.component.vue';
+import {useToast} from "primevue/usetoast";
+import Toast from 'primevue/toast';
 
 
 /**
@@ -68,19 +60,13 @@ import DeleteTaskDialog from '../presentation/views/delete-task-dialog.component
  */
 
 const taskStore = useTaskStore();
+const toast = useToast();
 
 const showTaskDialog = ref(false);
 const showDeleteDialog = ref(false);
 const selectedTask = ref(null);
 const taskToDelete = ref(null);
 
-const availableFields = ref([
-  'Campo de Granos, Los Grandes',
-  'Papas del Sol',
-  'Parcela de Maíz La Serrana',
-  'Invernadero de Tomates',
-  'Campo de Zanahorias Beta',
-]);
 
 onMounted(() => {
   taskStore.fetchTasks();
@@ -95,39 +81,44 @@ const handleToggleTask = async (taskId) => {
 };
 
 const handleEditTask = (task) => {
-  selectedTask.value = task;
+  selectedTask.value = { ...task };
   showTaskDialog.value = true;
 };
 
 const handleDeleteTask = (task) => {
-  taskToDelete.value = task;
-  showDeleteDialog.value = true;
+  taskToDelete.value = task; // Guarda la tarea que se podría borrar
+  showDeleteDialog.value = true; // Muestra el diálogo de confirmación
 };
 
 const handleSaveTask = async (taskData) => {
   try {
-    if (selectedTask.value) {
+    if (selectedTask.value && selectedTask.value.id) {
       await taskStore.updateTask(selectedTask.value.id, taskData);
+      toast.add({ severity: 'success', summary: 'Éxito', detail: 'Tarea actualizada correctamente.', life: 3000 });
     } else {
       await taskStore.createTask(taskData);
+      toast.add({ severity: 'success', summary: 'Éxito', detail: 'Tarea creada.', life: 3000 });
     }
-    showTaskDialog.value = false;
-    selectedTask.value = null;
   } catch (error) {
-    console.error('Error saving task:', error);
+    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar la tarea.', life: 3000 });
+  } finally {
+    handleCancelDialog();
   }
 };
 
 const handleConfirmDelete = async () => {
-  if (taskToDelete.value) {
-    try {
-      await taskStore.deleteTask(taskToDelete.value.id);
-      taskToDelete.value = null;
-    } catch (error) {
-      console.error('Error deleting task:', error);
-    }
+  if (!taskToDelete.value) return;
+
+  try {
+    await taskStore.deleteTask(taskToDelete.value.id);
+  } catch (error) {
+    console.error('Error deleting task:', error);
+  } finally {
+    showDeleteDialog.value = false;
+    taskToDelete.value = null;
   }
 };
+
 
 const handleCancelDialog = () => {
   showTaskDialog.value = false;
