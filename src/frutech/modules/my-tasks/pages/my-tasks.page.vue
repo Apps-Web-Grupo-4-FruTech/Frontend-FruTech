@@ -12,7 +12,7 @@
       </template>
       <template #content>
         <p class="description">
-          Organize your daily tasks. Mark completed tasks and add new ones.
+          {{ $t('task.origin') }}
         </p>
 
         <TaskList 
@@ -86,8 +86,8 @@ const handleEditTask = (task) => {
 };
 
 const handleDeleteTask = (task) => {
-  taskToDelete.value = task; // Guarda la tarea que se podría borrar
-  showDeleteDialog.value = true; // Muestra el diálogo de confirmación
+  taskToDelete.value = task;
+  showDeleteDialog.value = true;
 };
 
 const handleSaveTask = async (taskData) => {

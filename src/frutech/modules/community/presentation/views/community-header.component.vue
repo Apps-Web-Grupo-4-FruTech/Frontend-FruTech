@@ -1,10 +1,10 @@
 <template>
   <div class="community-header">
-    <h1 class="title">What Our Community Says</h1>
+    <h1 class="title">{{$t('community.title')}}</h1>
     <p class="subtitle">
-      Real feedback from real users who have transformed their workflow with our application. Join thousands of satisfied customers worldwide.
+      {{$t('community.description')}}
     </p>
-    <span class="comments-count">{{ commentsCount }} Comments</span>
+    <span class="comments-count">{{ commentsCount }} {{$t('community.quantity')}}</span>
   </div>
 </template>
 

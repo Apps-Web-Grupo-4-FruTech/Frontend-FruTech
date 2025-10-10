@@ -1,18 +1,12 @@
 {
   "dashboard": {
-    "myCrops": "Mis Cultivos",
-    "recentTasks": "Tareas Recientes",
-    "cropName": "Nombre del Cultivo",
-    "task": "Tarea",
-    "deadline": "Fecha Límite",
-    "actions": "Acciones",
-    "lastRecommendations": "Últimas Recomendaciones",
-    "irrigationReview": "Revisión de Riego",
-    "pestAlert": "Alerta de Plaga",
-    "fertilizationNeeded": "Fertilización Necesaria",
     "addNewCrop": "Añadir Nuevo Cultivo",
-    "view": "Ver",
-    "edit": "Editar"
+    "view_tasks": "Ver Tareas",
+    "crop_name": "Nombre del Cultivo",
+    "task": "Tarea",
+    "due_date": "Fecha Limite",
+    "actions": "Acciones",
+    "recommendatios": "Ultimas Recomendaciones"
   },
 
   "sidebar": {
@@ -170,5 +164,14 @@
     "new_task": "Añadir Nueva Tarea",
     "date": "Fecha Limite",
     "description": "Descripcion de la Tarea"
+  },
+  "task":{
+    "description": "Descripcion",
+    "origin": "Organiza tus tareas diarias. Marcalas como completadas"
+  },
+  "community": {
+    "title": "Lo que dice nuestra comunidad",
+    "description": "Retroalimentacion de nuestros usuarios que se unieron al flujo de la aplicacion. Unete a miles de uusarios satisfechos en todo el mundo",
+    "quantity": "Comentarios"
   }
 }

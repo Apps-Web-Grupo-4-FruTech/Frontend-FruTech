@@ -1,18 +1,12 @@
 {
   "dashboard": {
-    "myCrops": "My Crops",
-    "recentTasks": "Recent Tasks",
-    "cropName": "Crop Name",
-    "task": "Task",
-    "deadline": "Deadline",
-    "actions": "Actions",
-    "lastRecommendations": "Last Recommendations",
-    "irrigationReview": "Irrigation Review",
-    "pestAlert": "Pest Alert",
-    "fertilizationNeeded": "Fertilization Needed",
     "addNewCrop": "Add New Crop",
-    "view": "View",
-    "edit": "Edit"
+    "view_tasks": "View Tasks",
+    "crop_name": "Crop name",
+    "task": "Task",
+    "due_date": "Due Date",
+    "actions": "Actions",
+    "recommendatios": "Lastest Recommendations"
   },
 
   "sidebar": {
@@ -170,5 +164,14 @@
     "new_task": "Add New Task",
     "date": "Due Date",
     "description": "Task Description"
+  },
+  "task":{
+    "description": "Description",
+    "origin": "Organize your daily tasks. Mark completed tasks."
+  },
+  "community": {
+    "title": "What Our Community Says",
+    "description": "Real feedback from real users who have transformed their workflow with our application. Join thousands of satisfied customers worldwide.",
+    "quantity": "Comments"
   }
 }

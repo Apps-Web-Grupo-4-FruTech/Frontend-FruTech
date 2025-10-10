@@ -12,7 +12,7 @@ export class DashboardAssembler {
         return {
             previewFields: dashboardEntity.previewFields.map(field => ({
                 id: field.id,
-                imageUrl: field.image_url, // Mapeo de snake_case a camelCase
+                imageUrl: field.image_url,
                 title: field.title
             })),
             recommendations: dashboardEntity.recommendations.map(rec => ({

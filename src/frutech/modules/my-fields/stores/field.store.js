@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { FieldApiRepository } from '../infrastructure/field.api-repository.js';
-
+import { useDashboardStore } from '@/frutech/modules/dashboard/stores/dashboard.store.js';
 const fieldRepository = new FieldApiRepository();
+
 
 export const useFieldStore = defineStore('fields', () => {
     const fields = ref([]);
@@ -53,7 +54,7 @@ export const useFieldStore = defineStore('fields', () => {
                 name: fieldData.name,
                 location: fieldData.location,
                 field_size: fieldData.size,
-                status: "Healthy",
+                status: "",
                 product: "", crop: "", days_since_planting: "0", planting_date: "",
                 expecting_harvest: "", "Soil Type": "", watering: "", sunlight: "",
                 progress_history: [{ watered: "", fertilized: "", pests: "" }], tasks: []
@@ -62,6 +63,9 @@ export const useFieldStore = defineStore('fields', () => {
 
             await fieldRepository.create(previewPayload, detailPayload);
             await fetchFields();
+
+            const dashboardStore = useDashboardStore();
+            dashboardStore.fetchDashboardData();
 
         } catch (e) {
             error.value = 'No se pudo guardar el campo.';
@@ -120,6 +124,24 @@ export const useFieldStore = defineStore('fields', () => {
             isLoading.value = false;
         }
     }
+
+    async function updateFieldCropInfo(fieldId, cropData) {
+        isLoading.value = true;
+        error.value = null;
+        try {
+            await fieldRepository.updateField(fieldId, cropData);
+            if (currentField.value && currentField.value.id === fieldId) {
+                currentField.value = { ...currentField.value, ...cropData };
+            }
+        } catch (e) {
+            error.value = 'No se pudo actualizar la información del cultivo en el campo.';
+            console.error(e);
+            throw e;
+        } finally {
+            isLoading.value = false;
+        }
+    }
+
     return {
         fields,
         currentField,
@@ -129,6 +151,7 @@ export const useFieldStore = defineStore('fields', () => {
         fetchFieldById,
         createField,
         updateFieldProgress,
-        addTaskToField
+        addTaskToField,
+        updateFieldCropInfo
     };
 });

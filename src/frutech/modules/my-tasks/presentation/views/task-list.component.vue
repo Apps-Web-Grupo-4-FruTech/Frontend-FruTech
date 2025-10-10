@@ -6,10 +6,10 @@
 
     <div v-else-if="sortedTasks.length > 0" class="tasks-table">
       <div class="table-header">
-        <div class="col-description">Description</div>
-        <div class="col-date">Due Date</div>
-        <div class="col-field">Field</div>
-        <div class="col-actions">Actions</div>
+        <div class="col-description">{{ $t('task.description') }}</div>
+        <div class="col-date">{{ $t('dashboard.due_date') }}</div>
+        <div class="col-field">{{ $t('manageCrops.field') }}</div>
+        <div class="col-actions">{{ $t('dashboard.actions') }}</div>
       </div>
 
       <div class="table-body">

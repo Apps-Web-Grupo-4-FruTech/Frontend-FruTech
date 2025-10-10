@@ -146,7 +146,7 @@ const statusOptions = computed(() => [
 
 const isEditing = computed(() => !!props.crop);
 
-// Watch for crop changes to populate form
+
 watch(() => props.crop, (newCrop) => {
   if (newCrop) {
     formData.value = {
@@ -162,7 +162,7 @@ watch(() => props.crop, (newCrop) => {
   }
 }, { immediate: true });
 
-// Watch for dialog visibility changes
+
 watch(() => props.visible, (newVisible) => {
   if (!newVisible) {
     resetForm();

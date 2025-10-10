@@ -44,7 +44,7 @@ const router = useRouter();
 const fieldName = ref('');
 const location = ref('');
 const fieldSize = ref('');
-const imagePreviewUrl = ref(null); // URL local para la imagen
+const imagePreviewUrl = ref(null);
 const imageFile = ref(null);
 
 const handleFileUpload = (event) => {

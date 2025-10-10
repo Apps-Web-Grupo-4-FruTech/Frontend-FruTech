@@ -184,12 +184,12 @@ const confirmDeleteTask = (task) => {
     accept: async () => {
       try {
         await taskStore.deleteTask(task.id);
-        if (field.value?.tasks) {
-          field.value.tasks = field.value.tasks.filter(t => t.id !== task.id);
-        }
+        // Re-fetch the field data to get the updated task list
+        await fieldStore.fetchFieldById(route.params.id);
         toast.add({ severity: 'info', summary: 'Confirmado', detail: 'Tarea eliminada', life: 3000 });
       } catch (error) {
-        toast.add({ severity: 'info', summary: 'Confirmado', detail: 'Tarea eliminada', life: 3000 });
+        console.error('Error deleting task:', error);
+        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la tarea.', life: 3000 });
       }
     }
   });

@@ -94,7 +94,6 @@ const cropStore = useCropStore();
 const showCropForm = ref(false);
 const selectedCrop = ref(null);
 
-// Computed properties for statistics
 const totalCrops = computed(() => cropStore.crops.length);
 const healthyCrops = computed(() => cropStore.crops.filter(crop => crop.status === 'Healthy').length);
 const attentionCrops = computed(() => cropStore.crops.filter(crop => crop.status === 'Attention').length);
@@ -140,7 +139,6 @@ const goToNewCrop = () => {
 const onSubmitCrop = async (cropData) => {
   try {
     if (selectedCrop.value) {
-      // Update existing crop
       await cropStore.updateCrop(selectedCrop.value.id, cropData);
       toast.add({
         severity: 'success',
@@ -149,7 +147,6 @@ const onSubmitCrop = async (cropData) => {
         life: 3000
       });
     } else {
-      // Create new crop
       await cropStore.createCrop(cropData);
       toast.add({
         severity: 'success',

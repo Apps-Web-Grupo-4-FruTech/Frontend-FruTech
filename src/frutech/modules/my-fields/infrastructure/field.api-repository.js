@@ -1,8 +1,7 @@
-import {IFieldRepository} from "@/frutech/modules/my-fields/domain/model/field.respository.js";
-import {FieldAssembler} from "@/frutech/modules/my-fields/application/field.assembler.js";
+import { IFieldRepository } from "@/frutech/modules/my-fields/domain/model/field.respository.js";
+import { FieldAssembler } from "@/frutech/modules/my-fields/application/field.assembler.js";
+import http from '@/services/http-common.js';
 
-
-const API_URL = import.meta.env.VITE_API_URL;
 const PREVIEW_FIELDS_PATH = import.meta.env.VITE_PREVIEW_FIELDS_ENDPOINT_PATH;
 const CROP_STATUS_PATH = import.meta.env.VITE_CROP_STATUS_ENDPOINT_PATH;
 const FIELDS_PATH = import.meta.env.VITE_FIELDS_ENDPOINT_PATH;
@@ -18,16 +17,12 @@ export class FieldApiRepository extends IFieldRepository {
     async getAll() {
         try {
             const [previewResponse, statusResponse] = await Promise.all([
-                fetch(`${API_URL}${PREVIEW_FIELDS_PATH}`),
-                fetch(`${API_URL}${CROP_STATUS_PATH}`)
+                http.get(PREVIEW_FIELDS_PATH),
+                http.get(CROP_STATUS_PATH)
             ]);
 
-            if (!previewResponse.ok || !statusResponse.ok) {
-                throw new Error('Error de red al obtener los datos de los campos.');
-            }
-
-            const previewFieldDTOs = await previewResponse.json();
-            const cropStatusDTOs = await statusResponse.json();
+            const previewFieldDTOs = previewResponse.data;
+            const cropStatusDTOs = statusResponse.data;
 
             return FieldAssembler.toModel(previewFieldDTOs, cropStatusDTOs);
 
@@ -43,11 +38,8 @@ export class FieldApiRepository extends IFieldRepository {
      */
     async getById(id) {
         try {
-            const response = await fetch(`${API_URL}${FIELDS_PATH}/${id}`);
-            if (!response.ok) {
-                throw new Error(`No se pudo encontrar el campo con ID ${id}.`);
-            }
-            return await response.json();
+            const response = await http.get(`${FIELDS_PATH}/${id}`);
+            return response.data;
         } catch (error) {
             console.error('FieldApiRepository getById Error:', error);
             throw error;
@@ -62,27 +54,10 @@ export class FieldApiRepository extends IFieldRepository {
     async create(previewData, detailData) {
         try {
             const [previewResponse, detailResponse] = await Promise.all([
-                fetch(`${API_URL}${PREVIEW_FIELDS_PATH}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(previewData),
-                }),
-                fetch(`${API_URL}${FIELDS_PATH}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(detailData),
-                }),
+                http.post(PREVIEW_FIELDS_PATH, previewData),
+                http.post(FIELDS_PATH, detailData),
             ]);
-
-            if (!previewResponse.ok || !detailResponse.ok) {
-                console.error('Una de las respuestas del servidor no fue OK', {
-                    previewStatus: previewResponse.status,
-                    detailStatus: detailResponse.status,
-                });
-                throw new Error('No se pudo crear el nuevo campo en ambas colecciones.');
-            }
-            return await previewResponse.json();
-
+            return previewResponse.data;
         } catch (error) {
             console.error('FieldApiRepository create Error:', error);
             throw error;
@@ -90,13 +65,8 @@ export class FieldApiRepository extends IFieldRepository {
     }
     async updateField(id, fieldData) {
         try {
-            const response = await fetch(`${API_URL}${FIELDS_PATH}/${id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(fieldData),
-            });
-            if (!response.ok) throw new Error(`Could not update field with ID ${id}.`);
-            return await response.json();
+            const response = await http.patch(`${FIELDS_PATH}/${id}`, fieldData);
+            return response.data;
         } catch (error) {
             console.error('FieldApiRepository updateField Error:', error);
             throw error;
@@ -110,13 +80,8 @@ export class FieldApiRepository extends IFieldRepository {
      */
     async addNewTask(taskData) {
         try {
-            const response = await fetch(`${API_URL}${TASK_PATH}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(taskData),
-            });
-            if (!response.ok) throw new Error('Could not create new task.');
-            return await response.json();
+            const response = await http.post(TASK_PATH, taskData);
+            return response.data;
         } catch (error) {
             console.error('FieldApiRepository addNewTask Error:', error);
             throw error;
@@ -124,9 +89,8 @@ export class FieldApiRepository extends IFieldRepository {
     }
     async getAllFieldsDetails() {
         try {
-            const response = await fetch(`${API_URL}${FIELDS_PATH}`);
-            if (!response.ok) throw new Error('No se pudieron obtener los detalles de los campos.');
-            return await response.json();
+            const response = await http.get(FIELDS_PATH);
+            return response.data;
         } catch (error) {
             console.error('FieldApiRepository getAllFieldsDetails Error:', error);
             throw error;
@@ -134,25 +98,19 @@ export class FieldApiRepository extends IFieldRepository {
     }
     async updateUpcomingTask(taskId, taskData) {
         try {
-            const response = await fetch(`${API_URL}${UPCOMING_TASKS_PATH}/${taskId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(taskData),
-            });
-            if (response.ok) {
-                return await response.json();
-            }
+            const response = await http.patch(`${UPCOMING_TASKS_PATH}/${taskId}`, taskData);
+            return response.data;
         } catch (error) {
             console.error('FieldApiRepository updateUpcomingTask Error:', error);
+            throw error;
         }
     }
     async deleteUpcomingTask(taskId) {
         try {
-            await fetch(`${API_URL}${UPCOMING_TASKS_PATH}/${taskId}`, {
-                method: 'DELETE',
-            });
+            await http.delete(`${UPCOMING_TASKS_PATH}/${taskId}`);
         } catch (error) {
             console.error('FieldApiRepository deleteUpcomingTask Error:', error);
+            throw error;
         }
     }
 }

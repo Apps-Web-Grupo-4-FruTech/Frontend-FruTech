@@ -4,6 +4,7 @@ import { TaskApiRepository } from '../infrastructure/task-api.repository';
 import { TaskAssembler } from './task.assembler';
 import { Task } from '../domain/models/task.entity';
 import { FieldApiRepository } from "@/frutech/modules/my-fields/infrastructure/field.api-repository.js";
+import { useDashboardStore } from '@/frutech/modules/dashboard/stores/dashboard.store.js'; // <-- AÑADIDO: Importar el store del dashboard
 
 const repository = new TaskApiRepository();
 const assembler = new TaskAssembler();
@@ -72,10 +73,10 @@ export const useTaskStore = defineStore('tasks', () => {
         error.value = null;
         try {
             const allTasks = await repository.getAll();
-            const newId = allTasks.length > 0 
-                ? Math.max(...allTasks.map(t => t.id)) + 1 
+            const newId = allTasks.length > 0
+                ? Math.max(...allTasks.map(t => t.id)) + 1
                 : 1;
-            
+
             const taskEntity = new Task({
                 id: newId,
                 description: taskData.description,
@@ -182,6 +183,9 @@ export const useTaskStore = defineStore('tasks', () => {
 
             tasks.value = tasks.value.filter((t) => t.id !== taskId);
 
+            const dashboardStore = useDashboardStore();
+            dashboardStore.fetchDashboardData();
+
         } catch (err) {
             error.value = 'Could not delete task.';
             console.error(err);
@@ -199,19 +203,16 @@ export const useTaskStore = defineStore('tasks', () => {
     }
 
     return {
-        // State
         tasks,
         isLoading,
         error,
 
-        // Computed
         taskCount,
         completedTasks,
         pendingTasks,
         overdueTasks,
         sortedTasks,
 
-        // Actions
         fetchTasks,
         createTask,
         updateTask,

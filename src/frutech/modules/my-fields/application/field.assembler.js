@@ -1,7 +1,6 @@
 
 export class FieldAssembler {
     /**
-     * Combina los DTOs para crear los Modelos de Dominio.
      * @param {import('./field.dto').PreviewFieldDTO[]} previewFieldDTOs
      * @param {import('./field.dto').CropStatusDTO[]} cropStatusDTOs
      * @returns {FieldModel[]}

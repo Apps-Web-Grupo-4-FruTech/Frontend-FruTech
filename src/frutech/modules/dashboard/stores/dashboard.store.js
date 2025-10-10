@@ -31,6 +31,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     async function fetchDashboardData() {
         isLoading.value = true;
         error.value = null;
+        dashboardData.value = null;
         try {
             const entity = await repository.getDashboardData();
             dashboardData.value = assembler.toDTO(entity);

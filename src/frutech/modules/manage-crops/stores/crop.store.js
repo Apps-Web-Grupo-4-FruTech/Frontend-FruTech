@@ -44,7 +44,7 @@ export const useCropStore = defineStore('crop', () => {
         isLoading.value = true;
         error.value = null;
         try {
-            // Generate a new ID (simple approach for demo)
+
             const newId = Math.max(...crops.value.map(c => c.id), 0) + 1;
             
             const cropEntity = new Crop({

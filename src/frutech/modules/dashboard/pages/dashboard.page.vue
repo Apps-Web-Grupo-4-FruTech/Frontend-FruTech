@@ -14,7 +14,7 @@
           <template #title>
             <div class="flex justify-content-between align-items-center">
               <h1 class="m-0">{{ $t('sidebar.dashboard') }}</h1>
-              <Button label="Añadir Nuevo Cultivo" icon="pi pi-plus" @click="goToMyFields" />
+              <Button :label="$t('dashboard.addNewCrop')" icon="pi pi-plus" @click="goToMyFields" />
             </div>
           </template>
           <template #content>
@@ -32,15 +32,15 @@
         <Card>
           <template #title>
             <div class="flex justify-content-between align-items-center">
-              <h2 class="m-0 text-xl font-semibold">Tareas Recientes</h2>
-                <Button label="Ver tareas" @click="goToMyTasks" text />
+              <h2 class="m-0 text-xl font-semibold">{{ $t('sidebar.myTasks') }}</h2>
+                <Button :label="$t('dashboard.view_tasks')" @click="goToMyTasks" text />
           </div></template>
           <template #content>
             <DataTable :value="store.dashboardData.upcomingTasks" responsiveLayout="scroll">
-              <Column field="name" header="Nombre del Cultivo"></Column>
-              <Column field="task" header="Tarea"></Column>
-              <Column field="date" header="Fecha Límite"></Column>
-              <Column header="Acciones">
+              <Column field="name" :header="$t('dashboard.crop_name')"></Column>
+              <Column field="task" :header="$t('dashboard.task')"></Column>
+              <Column field="date" :header="$t('dashboard.due_date')"></Column>
+              <Column :header="$t('dashboard.actions')">
                 <template #body>
                   <Checkbox :binary="true" />
                 </template>
@@ -52,7 +52,7 @@
 
       <div class="col-12">
         <Card>
-          <template #title><h2 class="m-0 text-xl font-semibold">Últimas Recomendaciones</h2></template>
+          <template #title><h2 class="m-0 text-xl font-semibold">{{ $t('dashboard.recommendatios') }}</h2></template>
           <template #content>
             <div v-for="rec in store.dashboardData.recommendations" :key="rec.id" class="mb-3">
               <p><strong class="font-semibold">{{ rec.title }}:</strong> {{ rec.content }}</p>

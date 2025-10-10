@@ -13,19 +13,18 @@ export class DashboardApiRepository extends DashboardRepository {
      * @returns {Promise<DashboardData>} La entidad de datos del dashboard.
      */
     async getDashboardData() {
-        // Usamos las variables de entorno para los endpoints
+
         const previewFieldsPath = import.meta.env.VITE_PREVIEW_FIELDS_ENDPOINT_PATH;
         const recommendationsPath = import.meta.env.VITE_RECOMMENDATIONS_ENDPOINT_PATH;
         const upcomingTasksPath = import.meta.env.VITE_UPCOMING_TASKS_ENDPOINT_PATH;
 
-        // Realizamos todas las peticiones en paralelo para mayor eficiencia
+
         const [previewFieldsResponse, recommendationsResponse, upcomingTasksResponse] = await Promise.all([
             http.get(previewFieldsPath),
             http.get(recommendationsPath),
             http.get(upcomingTasksPath)
         ]);
 
-        // Creamos y devolvemos la entidad del dominio
         return new DashboardData({
             previewFields: previewFieldsResponse.data,
             recommendations: recommendationsResponse.data,
