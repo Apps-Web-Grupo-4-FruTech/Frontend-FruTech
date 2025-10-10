@@ -6,13 +6,11 @@
 
 import { createRouter, createWebHistory } from 'vue-router';
 import MainLayout from '../shared/layouts/main-layout.component.vue';
-import LoginPage from '@/frutech/modules/auth/pages/login.page.vue';
 
 const routes = [
     {
         path: '/login',
-        name: 'Login',
-        component: LoginPage,
+        name: 'Login'
     },
     {
         path: '/',
