@@ -13,7 +13,8 @@
       <div class="field grid align-items-center">
         <label for="email" class="col-12 md:col-4">{{ t('profile.email') }}</label>
         <div class="col-12 md:col-8">
-          <InputText id="email" :model-value="profile.email" class="w-full" disabled />
+          <InputText id="email" v-model="localProfile.email" class="w-full" :disabled="!isEditing" :invalid="!!errors.email" />
+          <small v-if="errors.email" class="p-error">{{ t(errors.email) }}</small>
         </div>
       </div>
 
@@ -28,8 +29,7 @@
       <div class="field grid align-items-center">
         <label for="doc" class="col-12 md:col-4">{{ t('profile.identityDocument') }}</label>
         <div class="col-12 md:col-8">
-          <InputText id="doc" v-model="localProfile.identificator" class="w-full" :disabled="!isEditing" :invalid="!!errors.identificator" />
-          <small v-if="errors.identificator" class="p-error">{{ t(errors.identificator) }}</small>
+          <InputText id="doc" v-model="localProfile.identificator" class="w-full" disabled />
         </div>
       </div>
 
@@ -45,9 +45,7 @@
 </template>
 
 <script setup>
-/**
- * @author Estefano Solis
- */
+
 import { ref, watch, reactive } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Card from 'primevue/card';
@@ -66,40 +64,38 @@ watch(() => props.profile, (newVal) => {
   Object.assign(localProfile, newVal);
 }, { deep: true, immediate: true });
 
-/**
- * Validates the personal information form fields.
- * @returns {boolean} True if the form is valid.
- */
+
 const validate = () => {
   Object.keys(errors).forEach(key => delete errors[key]);
   let isValid = true;
-  if (localProfile.name.length < 3) {
+
+  if (!localProfile.name || localProfile.name.trim().length < 3) {
     errors.name = 'errors.nameLength';
     isValid = false;
   }
-  if (!/^\d{9}$/.test(localProfile.phoneNumber)) {
+
+  if (!/^\+\d+$/.test(localProfile.phoneNumber || '')) {
     errors.phoneNumber = 'errors.phoneDigits';
     isValid = false;
   }
-  if (!/^\d{8}$/.test(localProfile.identificator)) {
-    errors.identificator = 'errors.documentDigits';
+
+
+  const email = localProfile.email || '';
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // formato simple
+  if (!email || !emailRegex.test(email)) {
+    errors.email = 'errors.emailInvalid';
     isValid = false;
   }
+
   return isValid;
 }
 
-/**
- * Cancels editing and restores the original profile data.
- */
 const cancelEdit = () => {
   Object.assign(localProfile, props.profile);
   isEditing.value = false;
   Object.keys(errors).forEach(key => delete errors[key]);
 };
 
-/**
- * Validates and emits the event to save profile changes.
- */
 const save = () => {
   if (validate()) {
     emit('save', localProfile);

@@ -2,99 +2,52 @@ import http from '@/services/http-common.js';
 import { UserProfileRepository } from '../domain/repositories/user-profile.repository';
 import { UserProfile } from '../domain/models/user-profile.model';
 
-/**
- * @class UserProfileApiRepository
- * @classdesc Repository implementation that interacts with a REST API to manage user profiles.
- * @extends UserProfileRepository
- * @author Estefano Solis
- */
+const USERS_ENDPOINT = import.meta.env.VITE_ENDPOINT_USERS;
+
+
 export class UserProfileApiRepository extends UserProfileRepository {
-    endpoint = import.meta.env.VITE_USER_ENDPOINT_PATH;
+    endpoint = USERS_ENDPOINT;
 
-    /**
-     * Maps API data to the UserProfile domain model.
-     * @param {object} apiData - The raw data from the API.
-     * @returns {UserProfile} An instance of the UserProfile entity.
-     */
-    apiToDomain(apiData) {
-        return new UserProfile({
-            id: apiData.id,
-            name: apiData.user_name,
-            email: apiData.email,
-            phoneNumber: apiData.phone_number,
-            identificator: apiData.identificator,
-            password: apiData.password,
-        });
+
+    apiToDomain(api) {
+        const id = api.id ?? api.Id;
+        const name = api.userName ?? api.username ?? api.name ?? api.UserName ?? api.Name;
+        const email = api.email ?? api.Email;
+        const phoneNumber = api.phoneNumber ?? api.PhoneNumber;
+        const identificator = api.identificator ?? api.Identificator;
+        const password = '******';
+        return new UserProfile({ id: Number(id), name, email, phoneNumber, identificator, password });
     }
 
-    /**
-     * Maps a UserProfile domain entity to a plain object for API submission.
-     * @param {UserProfile} domainData - The domain entity.
-     * @returns {object} A plain object compatible with the API.
-     */
-    domainToApi(domainData) {
+
+    domainToProfilePayload(entity) {
         return {
-            id: domainData.id,
-            user_name: domainData.name,
-            email: domainData.email,
-            phone_number: domainData.phoneNumber,
-            identificator: domainData.identificator,
-            password: domainData.password,
+            userName: entity.name, // backend espera UserName
+            email: entity.email,
+            phoneNumber: entity.phoneNumber,
         };
     }
 
-    /**
-     * Gets a user profile by ID from the API.
-     * @param {number} id - The user's ID.
-     * @returns {Promise<UserProfile>} The user profile entity.
-     */
     async getById(id) {
-        const response = await http.get(this.endpoint);
-        const userData = response.data.find(user => user.id === id);
-        if (!userData) throw new Error('User not found');
-        return this.apiToDomain(userData);
+        const resp = await http.get(`${this.endpoint}/${id}`);
+        return this.apiToDomain(resp.data);
     }
 
-    /**
-     * Updates a user profile by sending data to the API.
-     * @param {UserProfile} userProfile - The profile entity to update.
-     * @returns {Promise<UserProfile>} The updated entity returned by the API.
-     */
     async update(userProfile) {
-        const apiData = this.domainToApi(userProfile);
-        const response = await http.put(`${this.endpoint}/${userProfile.id}`, apiData);
-        return this.apiToDomain(response.data);
+        const payload = this.domainToProfilePayload(userProfile);
+        const resp = await http.put(`${this.endpoint}/${userProfile.id}/profile`, payload);
+        const data = resp?.data && typeof resp.data === 'object' ? resp.data : payload;
+        if (!('identificator' in data) && !('Identificator' in data)) {
+            data.identificator = userProfile.identificator;
+        }
+        return this.apiToDomain({ id: userProfile.id, ...data });
     }
 
-    /**
-     * Updates a user's password in the database via the API.
-     * @param {number} userId - The user's ID.
-     * @param {string} currentPassword - The current password for verification.
-     * @param {string} newPassword - The new password.
-     * @returns {Promise<boolean>} True if the update was successful.
-     */
     async updatePassword(userId, currentPassword, newPassword) {
-        const response = await http.get(`${this.endpoint}/${userId}`);
-        const currentUserData = response.data;
-
-        if (currentUserData.password !== currentPassword) {
-            throw new Error('errors.passwordsDontMatch');
-        }
-
-        const updatedUserData = {
-            ...currentUserData,
-            password: newPassword,
-        };
-
-        await http.put(`${this.endpoint}/${userId}`, updatedUserData);
+        await http.put(`${this.endpoint}/${userId}/password`, { currentPassword, newPassword });
         return true;
     }
 
-    /**
-     * Deletes a user profile from the API.
-     * @param {number} id - The ID of the user to delete.
-     * @returns {Promise<void>}
-     */
     async delete(id) {
         await http.delete(`${this.endpoint}/${id}`);
     }
