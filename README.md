@@ -25,25 +25,11 @@ See [Vite Configuration Reference](https://vite.dev/config/).
 npm install
 ```
 
-### Start Backend API Server (Required)
-
-**IMPORTANT:** Before running the frontend, you must start the backend server in a separate terminal:
-
-```sh
-npm run server
-```
-
-This will start the JSON server on `http://localhost:3000` with the mock API endpoints.
-
 ### Compile and Hot-Reload for Development
-
-In a **separate terminal**, run:
 
 ```sh
 npm run dev
 ```
-
-The frontend will be available at `http://localhost:5173` (or another port if 5173 is in use).
 
 ### Compile and Minify for Production
 

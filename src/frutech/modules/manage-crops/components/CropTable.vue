@@ -21,7 +21,7 @@
         :rows="10"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rowsPerPageOptions="[5,10,25]"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} cultivos"
+        :currentPageReportTemplate="$t('manageCrops.pagination')"
         responsiveLayout="scroll"
         class="p-datatable-sm"
       >
@@ -33,13 +33,13 @@
         
         <Column field="planting_date" :header="$t('manageCrops.plantingDate')" :sortable="true">
           <template #body="slotProps">
-            <Tag :value="slotProps.data.planting_date" severity="info" />
+            <Tag :value="formatDate(slotProps.data.planting_date)" severity="info" />
           </template>
         </Column>
         
         <Column field="harvest_date" :header="$t('manageCrops.harvestDate')" :sortable="true">
           <template #body="slotProps">
-            <Tag :value="slotProps.data.harvest_date" severity="success" />
+            <Tag :value="formatDate(slotProps.data.harvest_date)" severity="success" />
           </template>
         </Column>
         
@@ -72,14 +72,14 @@
                 severity="warning" 
                 size="small" 
                 @click="$emit('edit', slotProps.data)"
-                v-tooltip.top="'Editar cultivo'"
+                v-tooltip.top="$t('manageCrops.tooltip.edit')"
               />
               <Button 
                 icon="pi pi-trash" 
                 severity="danger" 
                 size="small" 
                 @click="confirmDelete(slotProps.data)"
-                v-tooltip.top="'Eliminar cultivo'"
+                v-tooltip.top="$t('manageCrops.tooltip.delete')"
               />
             </div>
           </template>
@@ -137,6 +137,31 @@ import Tag from 'primevue/tag';
 import Badge from 'primevue/badge';
 import Dialog from 'primevue/dialog';
 import { useConfirm } from 'primevue/useconfirm';
+
+function formatDate(value, mode = 'DMY') {
+  if (!value) return '';
+  let datePart = String(value);
+  if (datePart.includes('T')) datePart = datePart.split('T')[0];
+  if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+    const [y, m, d] = datePart.split('-');
+    return mode === 'DMY' ? `${d}/${m}/${y}` : `${y}-${m}-${d}`;
+  }
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(datePart)) {
+    if (mode === 'DMY') return datePart;
+    const [d, m, y] = datePart.split('/');
+    return `${y}-${m}-${d}`;
+  }
+  try {
+    const d = new Date(datePart);
+    if (!isNaN(d.getTime())) {
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yy = d.getFullYear();
+      return mode === 'DMY' ? `${dd}/${mm}/${yy}` : `${yy}-${mm}-${dd}`;
+    }
+  } catch {}
+  return datePart; // fallback
+}
 
 const props = defineProps({
   crops: {
@@ -240,4 +265,3 @@ const deleteCrop = () => {
   border-bottom: 1px solid #e9ecef;
 }
 </style>
-

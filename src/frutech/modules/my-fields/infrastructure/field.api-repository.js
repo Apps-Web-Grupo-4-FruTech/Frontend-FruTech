@@ -2,115 +2,203 @@ import { IFieldRepository } from "@/frutech/modules/my-fields/domain/model/field
 import { FieldAssembler } from "@/frutech/modules/my-fields/application/field.assembler.js";
 import http from '@/services/http-common.js';
 
-const PREVIEW_FIELDS_PATH = import.meta.env.VITE_PREVIEW_FIELDS_ENDPOINT_PATH;
-const CROP_STATUS_PATH = import.meta.env.VITE_CROP_STATUS_ENDPOINT_PATH;
-const FIELDS_PATH = import.meta.env.VITE_FIELDS_ENDPOINT_PATH;
-const TASK_PATH = import.meta.env.VITE_TASK_ENDPOINT_PATH;
-const UPCOMING_TASKS_PATH = import.meta.env.VITE_UPCOMING_TASKS_ENDPOINT_PATH;
+const FIELDS_ENDPOINT = import.meta.env.VITE_ENDPOINT_FIELDS;
+const PROGRESS_ENDPOINT = import.meta.env.VITE_ENDPOINT_PROGRESS;
+const TASKS_ENDPOINT = import.meta.env.VITE_ENDPOINT_TASKS;
+
+/**
+ * Convierte fecha DD/MM/YYYY a formato ISO YYYY-MM-DD
+ * @param {string} dateStr - Fecha en formato DD/MM/YYYY o cualquier formato de fecha
+ * @returns {string|null} Fecha en formato ISO YYYY-MM-DD o null si es inválida
+ */
+function convertToISO(dateStr) {
+  if (!dateStr || typeof dateStr !== 'string' || dateStr.trim() === '') {
+    return null;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+    return dateStr.split('T')[0];
+  }
+
+  const parts = dateStr.split('/');
+  if (parts.length === 3) {
+    const [day, month, year] = parts;
+    if (day && month && year && !isNaN(day) && !isNaN(month) && !isNaN(year)) {
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+  }
+
+  try {
+    const date = new Date(dateStr);
+    if (!isNaN(date.getTime())) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  } catch (e) {
+  }
+
+  return null;
+}
 
 export class FieldApiRepository extends IFieldRepository {
-    /**
-     * Obtiene los datos de los endpoints y los transforma usando el Assembler.
-     * @override
-     * @returns {Promise<import('../domain/models/field.model').FieldModel[]>}
-     */
-    async getAll() {
-        try {
-            const [previewResponse, statusResponse] = await Promise.all([
-                http.get(PREVIEW_FIELDS_PATH),
-                http.get(CROP_STATUS_PATH)
-            ]);
+  /**
+   * Fetches all fields for the authenticated user from the API.
+   */
+  async getAll() {
+    const userRaw = localStorage.getItem('user');
+    if (!userRaw) throw new Error('User not authenticated');
 
-            const previewFieldDTOs = previewResponse.data;
-            const cropStatusDTOs = statusResponse.data;
-
-            return FieldAssembler.toModel(previewFieldDTOs, cropStatusDTOs);
-
-        } catch (error) {
-            console.error('FieldApiRepository Error:', error);
-            throw error;
-        }
-    }
-    /**
-     * Obtiene los datos detallados de un solo campo por su ID.
-     * @param {string | number} id
-     * @returns {Promise<any>} // En un caso real, usaríamos un Assembler para convertir a FieldDetailModel
-     */
-    async getById(id) {
-        try {
-            const response = await http.get(`${FIELDS_PATH}/${id}`);
-            return response.data;
-        } catch (error) {
-            console.error('FieldApiRepository getById Error:', error);
-            throw error;
-        }
-    }
-    /**
-     * Crea un nuevo campo enviando los datos a la API (db.json).
-     * @returns {Promise<any>} - La respuesta del servidor con el objeto ya creado.
-     * @param previewData
-     * @param detailData
-     */
-    async create(previewData, detailData) {
-        try {
-            const [previewResponse, detailResponse] = await Promise.all([
-                http.post(PREVIEW_FIELDS_PATH, previewData),
-                http.post(FIELDS_PATH, detailData),
-            ]);
-            return previewResponse.data;
-        } catch (error) {
-            console.error('FieldApiRepository create Error:', error);
-            throw error;
-        }
-    }
-    async updateField(id, fieldData) {
-        try {
-            const response = await http.patch(`${FIELDS_PATH}/${id}`, fieldData);
-            return response.data;
-        } catch (error) {
-            console.error('FieldApiRepository updateField Error:', error);
-            throw error;
-        }
+    let userId;
+    try {
+      const parsed = JSON.parse(userRaw);
+      userId = parsed?.id;
+    } catch {
+      throw new Error('Invalid user data');
     }
 
-    /**
-     * Agrega una nueva tarea a la lista global de tareas.
-     * @param {object} taskData El objeto de la nueva tarea.
-     * @returns {Promise<any>} Los datos de la tarea creada.
-     */
-    async addNewTask(taskData) {
-        try {
-            const response = await http.post(TASK_PATH, taskData);
-            return response.data;
-        } catch (error) {
-            console.error('FieldApiRepository addNewTask Error:', error);
-            throw error;
-        }
+    if (userId === undefined || userId === null || (typeof userId === 'string' && userId.trim() === '')) {
+      throw new Error('Invalid user ID');
     }
-    async getAllFieldsDetails() {
-        try {
-            const response = await http.get(FIELDS_PATH);
-            return response.data;
-        } catch (error) {
-            console.error('FieldApiRepository getAllFieldsDetails Error:', error);
-            throw error;
-        }
+
+    const response = await http.get(`${FIELDS_ENDPOINT}/user/${userId}`);
+    const data = Array.isArray(response.data) ? response.data : [];
+    return FieldAssembler.toModels(data);
+  }
+
+  async getById(id) {
+    try {
+      const response = await http.get(`${FIELDS_ENDPOINT}/${id}`);
+      return FieldAssembler.toModel(response.data);
+    } catch (error) {
+      throw new Error(error.message || 'Error retrieving field');
     }
-    async updateUpcomingTask(taskId, taskData) {
-        try {
-            const response = await http.patch(`${UPCOMING_TASKS_PATH}/${taskId}`, taskData);
-            return response.data;
-        } catch (error) {
-            console.error('FieldApiRepository updateUpcomingTask Error:', error);
-            throw error;
-        }
+  }
+
+  async create(fieldData) {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = fieldData.userId || user.id;
+
+      const formData = new FormData();
+      formData.append('Name', fieldData.name);
+      formData.append('Location', fieldData.location);
+
+      const size = fieldData.size ?? fieldData.fieldSize ?? fieldData.field_size;
+      if (size !== undefined && size !== null) {
+        formData.append('FieldSize', String(size));
+      }
+
+      if (userId !== undefined && userId !== null) {
+        formData.append('UserId', String(userId));
+      }
+
+      if (fieldData.imageFile instanceof File || fieldData.imageFile instanceof Blob) {
+        formData.append('Image', fieldData.imageFile);
+      }
+
+      const response = await http.post(FIELDS_ENDPOINT, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return FieldAssembler.toModel(response.data);
+    } catch (error) {
+      const message = error?.message || error?.response?.data?.message || 'Error creating field';
+      throw new Error(message);
     }
-    async deleteUpcomingTask(taskId) {
-        try {
-            await http.delete(`${UPCOMING_TASKS_PATH}/${taskId}`);
-        } catch (error) {
-            console.error('FieldApiRepository deleteUpcomingTask Error:', error);
-            throw error;
-        }
+  }
+
+  async updateField(id, fieldData) {
+    try {
+      const payload = FieldAssembler.toPayload(fieldData);
+      const response = await http.put(`${FIELDS_ENDPOINT}/${id}`, payload);
+      return FieldAssembler.toModel(response.data);
+    } catch (error) {
+      throw new Error(error.message || 'Error updating field');
     }
+  }
+
+  /**
+   * Updates the progress history record for a field.
+   * @param {number} progressId - The ID of the progress record to update
+   * @param {Object} progressData - Progress data containing:
+   *   - watered: date in DD/MM/YYYY format or boolean
+   *   - fertilized: date in DD/MM/YYYY format or boolean
+   *   - pests: date in DD/MM/YYYY format or boolean
+   * @returns {Promise<Object>} The updated progress record
+   */
+  async updateProgress(progressId, progressData) {
+    try {
+      const payload = {};
+
+      if (progressData.watered !== undefined && progressData.watered !== null) {
+        if (typeof progressData.watered === 'boolean') {
+          payload.Watered = progressData.watered;
+        } else if (typeof progressData.watered === 'string') {
+          const isoDate = convertToISO(progressData.watered);
+          payload.Watered = isoDate || progressData.watered;
+        } else {
+          payload.Watered = progressData.watered;
+        }
+      } else {
+        payload.Watered = false;
+      }
+
+      if (progressData.fertilized !== undefined && progressData.fertilized !== null) {
+        if (typeof progressData.fertilized === 'boolean') {
+          payload.Fertilized = progressData.fertilized;
+        } else if (typeof progressData.fertilized === 'string') {
+          const isoDate = convertToISO(progressData.fertilized);
+          payload.Fertilized = isoDate || progressData.fertilized;
+        } else {
+          payload.Fertilized = progressData.fertilized;
+        }
+      } else {
+        payload.Fertilized = false;
+      }
+
+      if (progressData.pests !== undefined && progressData.pests !== null) {
+        if (typeof progressData.pests === 'boolean') {
+          payload.Pests = progressData.pests;
+        } else if (typeof progressData.pests === 'string') {
+          const isoDate = convertToISO(progressData.pests);
+          payload.Pests = isoDate || progressData.pests;
+        } else {
+          payload.Pests = progressData.pests;
+        }
+      } else {
+        payload.Pests = false;
+      }
+
+      const response = await http.put(`${PROGRESS_ENDPOINT}/${progressId}`, payload);
+      return response.data;
+    } catch (error) {
+      const message = error?.response?.data?.message || error?.message || 'Error updating progress';
+      throw new Error(message);
+    }
+  }
+
+  /**
+   * Creates a new task associated with a field.
+   * @param {Object} taskPayload - Task data:
+   *   - fieldId: Field ID (number)
+   *   - description: Task description (string)
+   *   - dueDate: Due date in ISO format YYYY-MM-DD (string)
+   * @returns {Promise<Object>} The created task
+   */
+  async addNewTask(taskPayload) {
+    try {
+      const payload = {
+        FieldId: Number(taskPayload.fieldId),
+        Description: taskPayload.description,
+        DueDate: taskPayload.dueDate
+      };
+
+      const response = await http.post(TASKS_ENDPOINT, payload);
+      return response.data;
+    } catch (error) {
+      const message = error?.response?.data?.message || error?.message || 'Error creating task';
+      throw new Error(message);
+    }
+  }
 }

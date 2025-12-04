@@ -11,15 +11,14 @@ import App from './App.vue';
 import router from './router';
 import i18n from './assets/i18n';
 
-// PrimeVue
 import PrimeVue from 'primevue/config';
 import Aura from '@primevue/themes/aura';
 import 'primeflex/primeflex.css';
 import 'primeicons/primeicons.css';
 import ConfirmationService from 'primevue/confirmationservice';
 import ToastService from 'primevue/toastservice';
+import Tooltip from 'primevue/tooltip';
 
-// Custom Global Styles
 import './assets/styles/global.css';
 
 const app = createApp(App);
@@ -42,5 +41,7 @@ app.use(PrimeVue, {
 });
 app.use(ConfirmationService);
 app.use(ToastService);
+
+app.directive('tooltip', Tooltip);
 
 app.mount('#app');

@@ -1,16 +1,27 @@
 /**
  * @file Vue Router configuration.
- * @description This file sets up all the application routes, including lazy-loading
- * for feature components and defines the main layout structure.
+ * @description Configuración de rutas con redirección inicial al Login.
  */
 
 import { createRouter, createWebHistory } from 'vue-router';
 import MainLayout from '../shared/layouts/main-layout.component.vue';
+import { useAuthStore } from "@/stores/auth.store.js";
+
+const LoginPage = () => import('@/frutech/modules/iam/pages/login.page.vue');
+const RegisterPage = () => import('@/frutech/modules/iam/pages/register.page.vue');
 
 const routes = [
     {
+        path: '/register',
+        name: 'Register',
+        component: RegisterPage,
+        meta: { public: true }
+    },
+    {
         path: '/login',
-        name: 'Login'
+        name: 'Login',
+        component: LoginPage,
+        meta: { public: true }
     },
     {
         path: '/',
@@ -67,12 +78,29 @@ const routes = [
             },
         ],
     },
-    { path: '/:pathMatch(.*)*', redirect: '/' }
+    { path: '/:pathMatch(.*)*', redirect: '/login' }
 ];
 
 const router = createRouter({
     history: createWebHistory(),
     routes,
+});
+
+router.beforeEach((to, from, next) => {
+    const authStore = useAuthStore();
+
+    const isPublic = to.matched.some(record => record.meta.public);
+    const isAuthenticated = authStore.isAuthenticated;
+
+    if (!isPublic && !isAuthenticated) {
+        return next({ path: '/login' });
+    }
+
+    if (isPublic && isAuthenticated) {
+        return next({ path: '/dashboard' });
+    }
+
+    next();
 });
 
 export default router;

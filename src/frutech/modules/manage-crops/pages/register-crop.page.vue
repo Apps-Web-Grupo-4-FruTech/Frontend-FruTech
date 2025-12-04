@@ -46,7 +46,7 @@
       >
         <div class="image-wrapper">
           <img :src="field.image_url" :alt="field.title" />
-          <Tag class="status-badge" :value="field.status" :severity="statusSeverity(field.status)" />
+          <Tag v-if="field.status" class="status-badge" :value="field.status" :severity="statusSeverity(field.status)" />
         </div>
         <div class="field-info">
           <div class="field-title">{{ field.title }}</div>
@@ -78,7 +78,6 @@ import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { useCropStore } from '../stores/crop.store';
 import { useFieldStore } from '@/frutech/modules/my-fields/stores/field.store.js';
-import http from '@/services/http-common.js';
 
 const router = useRouter();
 const { t: $t } = useI18n();
@@ -111,22 +110,17 @@ const previewFieldsWithStatus = ref([]);
 
 onMounted(async () => {
   try {
-    const [{ data: previews }, { data: statuses }, { data: fields }] = await Promise.all([
-      http.get('/preview_fields'),
-      http.get('/crop_status'),
-      http.get('/fields')
-    ]);
-
-    const statusById = Object.fromEntries(statuses.map(s => [s.id, s.status]));
-    const fieldById = Object.fromEntries(fields.map(f => [f.id, f]));
-
-    previewFieldsWithStatus.value = previews.map(p => {
-      const field = fieldById[p.id];
+    await fieldStore.fetchFields();
+    previewFieldsWithStatus.value = (fieldStore.fields || []).map(f => {
+      const rawCropName = f.cropName || f.crop || ''; // diferentes fuentes
+      const hasCrop = rawCropName && rawCropName.trim() !== '' && rawCropName !== 'Sin Cultivo' && rawCropName !== '—';
       return {
-        ...p,
-        status: statusById[p.id] || 'Healthy',
-        crop: field?.crop || 'Desconocido',
-        days: field?.days_since_planting || '0'
+        id: f.id,
+        title: f.name,
+        image_url: f.imageUrl,
+        status: hasCrop ? f.status : null,
+        crop: hasCrop ? rawCropName : '—',
+        days: '0'
       };
     });
   } catch (err) {
@@ -196,10 +190,6 @@ async function save() {
     return;
   }
 
-  const today = new Date();
-  const diffTime = today - plantingDate;
-  const daysSincePlanting = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
-
   const harvestDate = form.value.harvest_date ? new Date(form.value.harvest_date.split('/').reverse().join('-')) : null;
   let totalCropDays = form.value.days || '0';
   if (plantingDate && harvestDate && !isNaN(harvestDate.getTime())) {
@@ -208,34 +198,19 @@ async function save() {
   }
 
   try {
-    const cropPayload = { ...form.value, days: totalCropDays };
+    const cropPayload = {
+      ...form.value,
+      days: totalCropDays,
+      fieldId: selectedFieldId.value,
+      soilType: form.value.soilType || '',
+      sunlight: form.value.sunlight || '',
+      watering: form.value.watering || ''
+    };
     await cropStore.createCrop(cropPayload);
     toast.add({ severity: 'success', summary: 'Éxito', detail: 'Cultivo creado correctamente.', life: 2000 });
+    router.push({ name: 'ManageCrops' });
   } catch (e) {
     toast.add({ severity: 'error', summary: 'Error', detail: `No se pudo crear el registro del cultivo: ${e.message}`, life: 4000 });
-    isSubmitting.value = false;
-    return;
-  }
-
-  try {
-    const fieldUpdatePayload = {
-      product: form.value.title,
-      crop: form.value.title,
-      days_since_planting: daysSincePlanting.toString(),
-      planting_date: form.value.planting_date,
-      expecting_harvest: form.value.harvest_date,
-      "Soil Type": form.value.soilType,
-      status: form.value.status,
-      sunlight: form.value.sunlight,
-      watering: form.value.watering,
-    };
-
-    await fieldStore.updateFieldCropInfo(selectedFieldId.value, fieldUpdatePayload);
-    toast.add({ severity: 'success', summary: 'Éxito', detail: 'Campo actualizado con la nueva información.', life: 3000 });
-
-    router.push({ name: 'ManageCrops' });
-  } catch (error) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'El cultivo fue creado, pero no se pudo actualizar el campo.', life: 4000 });
   } finally {
     isSubmitting.value = false;
   }

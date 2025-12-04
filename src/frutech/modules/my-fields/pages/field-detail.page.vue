@@ -12,13 +12,18 @@
     <div v-else-if="fieldStore.error">{{ fieldStore.error }}</div>
     <div v-else-if="field" class="content-wrapper">
       <div class="hero-image-container">
-        <img :src="field.image_url" :alt="field.name" class="hero-image" />
+        <img
+          :src="field.imageUrl"
+          :alt="field.name"
+          class="hero-image"
+          @error="handleImageError"
+        />
       </div>
 
       <div class="header-section">
         <div>
           <h2 class="field-name">{{ field.name }}</h2>
-          <p class="crop-name">{{ field.product }}</p>
+          <p class="crop-name">{{ field.crop }}</p>
         </div>
         <div class="status-badge">
           <span :class="['status-dot', `status-${field.status.toLowerCase()}`]"></span>
@@ -28,12 +33,12 @@
       <div class="main-content">
         <div class="info-card">
           <div class="info-item"><span>{{t('field_detail.location')}}</span> {{ field.location }}</div>
-          <div class="info-item"><span>{{t('field_detail.field_size')}}</span> {{ field.field_size }}</div>
+          <div class="info-item"><span>{{t('field_detail.field_size')}}</span> {{ field.fieldSize }}</div>
           <div class="info-item"><span>{{t('field_detail.crop')}}</span> {{ field.crop }}</div>
-          <div class="info-item"><span>{{t('field_detail.days_since')}}</span> {{ field.days_since_planting }} Days</div>
-          <div class="info-item"><span>{{t('field_detail.planting_date')}}:</span> {{ field.planting_date }}</div>
-          <div class="info-item"><span>{{t('field_detail.expected')}}</span> {{ field.expecting_harvest }}</div>
-          <div class="info-item"><span>{{t('field_detail.soil_type')}}</span> {{ field['Soil Type'] }}</div>
+          <div class="info-item"><span>{{t('field_detail.days_since')}}</span> {{ field.daysSincePlanting }} Days</div>
+          <div class="info-item"><span>{{t('field_detail.planting_date')}}:</span> {{ field.plantingDate }}</div>
+          <div class="info-item"><span>{{t('field_detail.expected')}}</span> {{ field.expectingHarvest }}</div>
+          <div class="info-item"><span>{{t('field_detail.soil_type')}}</span> {{ field.soilType }}</div>
           <div class="info-item"><span>{{t('field_detail.watering')}}</span> {{ field.watering }}</div>
           <div class="info-item"><span>{{t('field_detail.sunlight')}}</span> {{ field.sunlight }}</div>
         </div>
@@ -165,11 +170,34 @@ const saveProgress = async () => {
 };
 
 const saveTask = async () => {
+  // Validar que la descripción tenga al menos 3 caracteres
+  if (!newTaskData.task || newTaskData.task.trim().length < 3) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Validación',
+      detail: 'La descripción debe tener al menos 3 caracteres.',
+      life: 3000
+    });
+    return;
+  }
+
   try {
     await fieldStore.addTaskToField(field.value.id, newTaskData);
     isTaskModalVisible.value = false;
+    toast.add({
+      severity: 'success',
+      summary: 'Éxito',
+      detail: 'Tarea agregada correctamente',
+      life: 3000
+    });
   } catch (error) {
     console.error('Failed to save task:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'No se pudo guardar la tarea',
+      life: 3000
+    });
   }
 };
 
@@ -184,7 +212,6 @@ const confirmDeleteTask = (task) => {
     accept: async () => {
       try {
         await taskStore.deleteTask(task.id);
-        // Re-fetch the field data to get the updated task list
         await fieldStore.fetchFieldById(route.params.id);
         toast.add({ severity: 'info', summary: 'Confirmado', detail: 'Tarea eliminada', life: 3000 });
       } catch (error) {
@@ -199,6 +226,10 @@ onMounted(() => {
   const fieldId = route.params.id;
   fieldStore.fetchFieldById(fieldId);
 });
+
+const handleImageError = (event) => {
+  event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YwZjBmMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=';
+};
 </script>
 
 <style scoped>

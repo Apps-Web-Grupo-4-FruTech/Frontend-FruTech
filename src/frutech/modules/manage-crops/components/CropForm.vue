@@ -45,7 +45,7 @@
         <small v-if="errors.harvest_date" class="p-error">{{ errors.harvest_date }}</small>
       </div>
 
-      <div class="field">
+      <div class="field" v-if="!isEditing">
         <label for="field" class="block text-900 font-medium mb-2">{{ $t('manageCrops.field') }} *</label>
         <InputText 
           id="field"
@@ -63,6 +63,8 @@
           id="status"
           v-model="formData.status" 
           :options="statusOptions"
+          optionLabel="label"
+          optionValue="value"
           :placeholder="$t('manageCrops.selectStatus')"
           :class="{'p-invalid': errors.status}"
           class="w-full"
@@ -70,7 +72,7 @@
         <small v-if="errors.status" class="p-error">{{ errors.status }}</small>
       </div>
 
-      <div class="field">
+      <div class="field" v-if="!isEditing">
         <label for="days" class="block text-900 font-medium mb-2">{{ $t('manageCrops.days') }} *</label>
         <InputText 
           id="days"
@@ -108,6 +110,32 @@ import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
+
+// Helper para formatear fechas a DD/MM/YYYY (o retornar YYYY-MM-DD si se requiere)
+function formatDate(value, mode = 'DMY') {
+  if (!value) return '';
+  let datePart = String(value);
+  if (datePart.includes('T')) datePart = datePart.split('T')[0];
+  if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+    const [y, m, d] = datePart.split('-');
+    return mode === 'DMY' ? `${d}/${m}/${y}` : `${y}-${m}-${d}`;
+  }
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(datePart)) {
+    if (mode === 'DMY') return datePart;
+    const [d, m, y] = datePart.split('/');
+    return `${y}-${m}-${d}`;
+  }
+  try {
+    const d = new Date(datePart);
+    if (!isNaN(d.getTime())) {
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yy = d.getFullYear();
+      return mode === 'DMY' ? `${dd}/${mm}/${yy}` : `${yy}-${mm}-${dd}`;
+    }
+  } catch {}
+  return datePart;
+}
 
 const props = defineProps({
   visible: {
@@ -151,8 +179,8 @@ watch(() => props.crop, (newCrop) => {
   if (newCrop) {
     formData.value = {
       title: newCrop.title || '',
-      planting_date: newCrop.planting_date || '',
-      harvest_date: newCrop.harvest_date || '',
+      planting_date: formatDate(newCrop.planting_date, 'DMY'),
+      harvest_date: formatDate(newCrop.harvest_date, 'DMY'),
       field: newCrop.field || '',
       status: newCrop.status || '',
       days: newCrop.days || ''
@@ -196,16 +224,18 @@ const validateForm = () => {
     errors.value.harvest_date = $t('manageCrops.validation.harvestDateRequired');
   }
 
-  if (!formData.value.field.trim()) {
-    errors.value.field = $t('manageCrops.validation.fieldRequired');
+  if (!isEditing.value) {
+    if (!formData.value.field.trim()) {
+      errors.value.field = $t('manageCrops.validation.fieldRequired');
+    }
+
+    if (!formData.value.days.trim()) {
+      errors.value.days = $t('manageCrops.validation.daysRequired');
+    }
   }
 
   if (!formData.value.status) {
     errors.value.status = $t('manageCrops.validation.statusRequired');
-  }
-
-  if (!formData.value.days.trim()) {
-    errors.value.days = $t('manageCrops.validation.daysRequired');
   }
 
   return Object.keys(errors.value).length === 0;

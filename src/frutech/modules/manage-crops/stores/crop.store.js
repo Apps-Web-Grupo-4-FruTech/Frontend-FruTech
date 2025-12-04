@@ -31,6 +31,7 @@ export const useCropStore = defineStore('crop', () => {
         } catch (err) {
             error.value = 'Could not load crops.';
             console.error(err);
+            crops.value = [];
         } finally {
             isLoading.value = false;
         }
@@ -38,7 +39,7 @@ export const useCropStore = defineStore('crop', () => {
 
     /**
      * Creates a new crop.
-     * @param {object} cropData - Object with crop data (title, planting_date, harvest_date, field, status, days).
+     * @param {object} cropData - Object with crop data (title, planting_date, harvest_date, field, fieldId, status, days, soilType, sunlight, watering).
      */
     async function createCrop(cropData) {
         isLoading.value = true;
@@ -53,13 +54,16 @@ export const useCropStore = defineStore('crop', () => {
                 planting_date: cropData.planting_date,
                 harvest_date: cropData.harvest_date,
                 field: cropData.field,
+                fieldId: cropData.fieldId, // ID numérico del campo
                 status: cropData.status,
-                days: cropData.days
+                days: cropData.days,
+                soilType: cropData.soilType || '',
+                sunlight: cropData.sunlight || '',
+                watering: cropData.watering || ''
             });
 
-            const createdEntity = await repository.create(cropEntity);
-            const newCropDTO = assembler.toDTO(createdEntity);
-            crops.value.push(newCropDTO);
+            await repository.create(cropEntity);
+            await fetchCrops();
         } catch (err) {
             error.value = 'Could not create crop.';
             console.error(err);
@@ -84,17 +88,17 @@ export const useCropStore = defineStore('crop', () => {
                 cropData.planting_date,
                 cropData.harvest_date,
                 cropData.field,
+                cropData.fieldId,
                 cropData.status,
-                cropData.days
+                cropData.days,
+                cropData.soilType,
+                cropData.sunlight,
+                cropData.watering
             );
             
-            const updatedEntity = await repository.update(currentEntity);
-            const updatedCropDTO = assembler.toDTO(updatedEntity);
-            
-            const index = crops.value.findIndex(crop => crop.id === cropId);
-            if (index !== -1) {
-                crops.value[index] = updatedCropDTO;
-            }
+            await repository.update(currentEntity);
+
+            await fetchCrops();
         } catch (err) {
             error.value = 'Could not update crop.';
             console.error(err);
@@ -135,13 +139,9 @@ export const useCropStore = defineStore('crop', () => {
             const currentEntity = await repository.getById(cropId);
             currentEntity.updateStatus(newStatus);
             
-            const updatedEntity = await repository.update(currentEntity);
-            const updatedCropDTO = assembler.toDTO(updatedEntity);
-            
-            const index = crops.value.findIndex(crop => crop.id === cropId);
-            if (index !== -1) {
-                crops.value[index] = updatedCropDTO;
-            }
+            await repository.update(currentEntity);
+
+            await fetchCrops();
         } catch (err) {
             error.value = 'Could not update crop status.';
             console.error(err);
