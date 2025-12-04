@@ -1,13 +1,8 @@
 import { defineStore } from 'pinia';
 import { CommunityApiRepository } from '../infrastructure/community-api.repository.js';
 import { CommunityRecommendationAssembler } from './community-recommendation.assembler.js';
+import { useAuthStore } from '@/stores/auth.store.js';
 
-/**
- * Pinia store for managing community recommendations.
- * This store handles state, getters, and actions related to community recommendations.
- * It interacts with the CommunityApiRepository to fetch data and uses the CommunityRecommendationAssembler
- * to convert entities to DTOs for use in the application.
- */
 export const useCommunityStore = defineStore('community', {
   state: () => ({
     recommendations: [],
@@ -56,6 +51,44 @@ export const useCommunityStore = defineStore('community', {
       }
     },
 
+    async createComment(commentText) {
+      this.error = null;
+      try {
+        if (!commentText || commentText.trim().length === 0) {
+          throw new Error('El comentario no puede estar vacío');
+        }
+        const authStore = useAuthStore();
+        const username = authStore?.user?.username;
+        if (!username) {
+          throw new Error('Usuario no autenticado');
+        }
+        const repository = new CommunityApiRepository();
+        await repository.createRecommendation({ userName: username, comment: commentText.trim() });
+        await this.fetchRecommendations();
+      } catch (error) {
+        this.error = error.message;
+        console.error('Error creando comentario:', error);
+        throw error;
+      }
+    },
+    async editComment(commentId, newContent) {
+      this.error = null;
+      try {
+        if (!commentId) {
+          throw new Error('ID del comentario es requerido');
+        }
+        if (!newContent || newContent.trim().length === 0) {
+          throw new Error('El comentario no puede estar vacío');
+        }
+        const repository = new CommunityApiRepository();
+        await repository.updateCommentContent(commentId, newContent.trim());
+        await this.fetchRecommendations();
+      } catch (error) {
+        this.error = error.message;
+        console.error('Error editando comentario:', error);
+        throw error;
+      }
+    },
     clearError() {
       this.error = null;
     }
