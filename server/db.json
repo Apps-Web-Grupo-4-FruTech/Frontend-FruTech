@@ -214,12 +214,6 @@
       ],
       "tasks": [
         {
-          "id": 5,
-          "date": "07/10/2025",
-          "name": "Invernadero de Tomates",
-          "task": "Urgent: Apply fungicide to control blight outbreak."
-        },
-        {
           "id": 6,
           "date": "08/10/2025",
           "name": "Invernadero de Tomates",
@@ -283,12 +277,6 @@
   ],
   "upcoming_tasks": [
     {
-      "id": 5,
-      "date": "07/10/2025",
-      "name": "Invernadero de Tomates",
-      "task": "Urgent: Apply fungicide to control blight outbreak."
-    },
-    {
       "id": 6,
       "date": "08/10/2025",
       "name": "Invernadero de Tomates",
@@ -325,12 +313,6 @@
       "description": "Investigate yellowing leaves in sector B.",
       "due_date": "09/10",
       "field": "Parcela de Maíz La Serrana"
-    },
-    {
-      "id": 5,
-      "description": "Urgent: Apply fungicide to control blight outbreak.",
-      "due_date": "07/10",
-      "field": "Invernadero de Tomates"
     },
     {
       "id": 6,

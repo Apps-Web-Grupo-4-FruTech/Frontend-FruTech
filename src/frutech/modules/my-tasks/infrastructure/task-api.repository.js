@@ -1,100 +1,118 @@
-import axios from 'axios';
 import apiClient from '@/services/http-common.js';
-import { TaskRepository } from '../domain/repositories/task.repository';
-import { Task } from '../domain/models/task.entity';
+import { TaskRepository } from '../domain/repositories/task.repository.js';
+import { Task } from '../domain/models/task.entity.js';
 
-const TASK_ENDPOINT = import.meta.env.VITE_TASK_ENDPOINT_PATH;
+const TASKS_ENDPOINT = import.meta.env.VITE_ENDPOINT_TASKS;
 
-/**
- * @class TaskApiRepository
- * @classdesc Repository implementation that interacts with a REST API to manage tasks.
- * @extends TaskRepository
- */
+function isoToDDMM(iso) {
+  if (!iso) return '01/01';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '01/01';
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${day}/${month}`;
+}
+
+function ddmmToISO(ddmm) {
+  const [day, month] = String(ddmm || '').split('/').map(Number);
+  const year = new Date().getFullYear();
+  return new Date(year, (month || 1) - 1, day || 1).toISOString();
+}
+
+
 export class TaskApiRepository extends TaskRepository {
 
-    /**
-     * Maps API data to the Task domain model.
-     * @param {object} apiData - The raw data from the API.
-     * @returns {Task} An instance of the Task entity.
-     */
-    apiToDomain(apiData) {
-        return new Task({
-            id: apiData.id,
-            description: apiData.description,
-            dueDate: apiData.due_date,
-            field: apiData.field,
-            completed: apiData.completed || false,
-        });
+  apiToDomain(apiData) {
+    let fieldValue = apiData.fieldName ?? apiData.FieldName ?? apiData.field_name ??
+                     apiData.field?.name ?? apiData.field;
+
+    if (!fieldValue || (typeof fieldValue === 'string' && fieldValue.trim() === '')) {
+      fieldValue = 'Campo Desconocido';
     }
 
-    /**
-     * Maps a Task domain entity to a plain object for API submission.
-     * @param {Task} domainData - The domain entity.
-     * @returns {object} A plain object compatible with the API.
-     */
-    domainToApi(domainData) {
-        return {
-            id: domainData.id,
-            description: domainData.description,
-            due_date: domainData.dueDate,
-            field: domainData.field,
-        };
+    return new Task({
+      id: apiData.id ?? apiData.Id,
+      description: apiData.description ?? apiData.Description,
+      dueDate: isoToDDMM(apiData.dueDate ?? apiData.DueDate ?? apiData.due_date),
+      field: fieldValue,
+      completed: Boolean(apiData.completed ?? apiData.Completed ?? false),
+    });
+  }
+
+
+  domainToApi(domainData) {
+    return {
+      id: domainData.id,
+      description: domainData.description,
+      dueDate: ddmmToISO(domainData.dueDate),
+      fieldId: domainData.fieldId || domainData.field_id,
+      completed: Boolean(domainData.completed),
+    };
+  }
+
+
+  async getAll() {
+    const userRaw = localStorage.getItem('user');
+    if (!userRaw) throw new Error('Usuario no autenticado');
+
+    let userId;
+    try {
+      const parsed = JSON.parse(userRaw);
+      userId = parsed?.id;
+    } catch {
+      throw new Error('Datos de usuario corruptos');
     }
 
-    /**
-     * Gets all tasks from the API.
-     * @returns {Promise<Array<Task>>} Array of task entities.
-     */
-    async getAll() {
-        const response = await apiClient.get(TASK_ENDPOINT);
-        return response.data.map((item) => this.apiToDomain(item));
+    if (userId === undefined || userId === null || (typeof userId === 'string' && userId.trim() === '')) {
+      throw new Error('ID de usuario inválido');
     }
 
-    /**
-     * Gets a task by ID from the API.
-     * @param {number} id - The task's ID.
-     * @returns {Promise<Task>} The task entity.
-     */
-    async getById(id) {
-        const response = await apiClient.get(`${TASK_ENDPOINT}/${id}`);
-        return this.apiToDomain(response.data);
-    }
+    const response = await apiClient.get(`${TASKS_ENDPOINT}/user/${userId}`);
+    return Array.isArray(response.data) ? response.data.map(d => this.apiToDomain(d)) : [];
+  }
 
-    /**
-     * Creates a new task via the API.
-     * @param {Task} task - The task entity to create.
-     * @returns {Promise<Task>} The created task entity.
-     */
-    async create(task) {
-        const apiData = this.domainToApi(task);
-        const response = await apiClient.post(TASK_ENDPOINT, apiData);
-        return this.apiToDomain(response.data);
-    }
 
-    /**
-     * Updates a task via the API.
-     * @param {Task} task - The task entity to update.
-     * @returns {Promise<Task>} The updated task entity.
-     */
-    async update(task) {
-        const apiData = this.domainToApi(task);
-        const response = await apiClient.patch(`${TASK_ENDPOINT}/${task.id}`, apiData);
-        return this.apiToDomain(response.data);
-    }
+  async getById(id) {
+    const response = await apiClient.get(`${TASKS_ENDPOINT}/${id}`);
+    return this.apiToDomain(response.data);
+  }
 
-    async updateCompletion(task) {
-        const response = await apiClient.patch(`${TASK_ENDPOINT}/${task.id}`, {
-            completed: task.completed,
-        });
-        return this.apiToDomain(response.data);
-    }
 
-    /**
-     * Deletes a task via the API.
-     * @param {number} id - The ID of the task to delete.
-     * @returns {Promise<void>}
-     */
-    async delete(id) {
-        await apiClient.delete(`${TASK_ENDPOINT}/${id}`);
+  async create(task) {
+    const payload = this.domainToApi(task);
+    const response = await apiClient.post(TASKS_ENDPOINT, payload);
+    return this.apiToDomain(response.data);
+  }
+
+
+  async update(task) {
+    const payload = this.domainToApi(task);
+    const response = await apiClient.put(`${TASKS_ENDPOINT}/${task.id}`, payload);
+    return this.apiToDomain(response.data);
+  }
+
+  async updateCompletion(task) {
+    const response = await apiClient.put(`${TASKS_ENDPOINT}/${task.id}`, { completed: task.completed });
+    return this.apiToDomain(response.data);
+  }
+
+
+  async delete(id) {
+    await apiClient.delete(`${TASKS_ENDPOINT}/${id}`);
+  }
+
+
+  async getByFieldId(fieldId) {
+    const response = await apiClient.get(`${TASKS_ENDPOINT}/field/${fieldId}`);
+    return Array.isArray(response.data) ? response.data.map(d => this.apiToDomain(d)) : [];
+  }
+
+
+  async getUpcomingTasks(userId, count = 3) {
+    if (userId === undefined || userId === null || String(userId).trim() === '') {
+      throw new Error('Invalid user ID');
     }
+    const response = await apiClient.get(`${TASKS_ENDPOINT}/user/${userId}/upcoming/${count}`);
+    return Array.isArray(response.data) ? response.data.map(d => this.apiToDomain(d)) : [];
+  }
 }

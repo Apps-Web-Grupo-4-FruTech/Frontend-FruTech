@@ -1,19 +1,14 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { TaskApiRepository } from '../infrastructure/task-api.repository';
-import { TaskAssembler } from './task.assembler';
-import { Task } from '../domain/models/task.entity';
-import { FieldApiRepository } from "@/frutech/modules/my-fields/infrastructure/field.api-repository.js";
-import { useDashboardStore } from '@/frutech/modules/dashboard/stores/dashboard.store.js'; // <-- AÑADIDO: Importar el store del dashboard
+import { TaskApiRepository } from '../infrastructure/task-api.repository.js';
+import { TaskAssembler } from './task.assembler.js';
+import { Task } from '../domain/models/task.entity.js';
+import { useDashboardStore } from '@/frutech/modules/dashboard/stores/dashboard.store.js';
 
 const repository = new TaskApiRepository();
 const assembler = new TaskAssembler();
-const fieldRepository = new FieldApiRepository();
 
-/**
- * @store useTaskStore
- * @description Pinia store to manage tasks state and actions.
- */
+
 export const useTaskStore = defineStore('tasks', () => {
     const tasks = ref([]);
     const isLoading = ref(false);
@@ -24,9 +19,7 @@ export const useTaskStore = defineStore('tasks', () => {
     const overdueTasks = computed(() => tasks.value.filter((t) => t.isOverdue));
     const taskCount = computed(() => tasks.value.length);
 
-    /**
-     * Sorts tasks by due date.
-     */
+
     const sortedTasks = computed(() => {
         if (!tasks.value.length) return [];
         return [...tasks.value].sort((a, b) => {
@@ -36,20 +29,14 @@ export const useTaskStore = defineStore('tasks', () => {
         });
     });
 
-    /**
-     * Parses a date string in DD/MM format.
-     * @param {string} dateStr - Date string in DD/MM format.
-     * @returns {Date}
-     */
+
     function parseDueDate(dateStr) {
         const [day, month] = dateStr.split('/').map(Number);
         const year = new Date().getFullYear();
         return new Date(year, month - 1, day);
     }
 
-    /**
-     * Fetches all tasks from the API.
-     */
+
     async function fetchTasks() {
         isLoading.value = true;
         error.value = null;
@@ -64,10 +51,7 @@ export const useTaskStore = defineStore('tasks', () => {
         }
     }
 
-    /**
-     * Creates a new task.
-     * @param {object} taskData - Object with task data { description, dueDate, field }.
-     */
+
     async function createTask(taskData) {
         isLoading.value = true;
         error.value = null;
@@ -96,11 +80,7 @@ export const useTaskStore = defineStore('tasks', () => {
         }
     }
 
-    /**
-     * Updates an existing task.
-     * @param {number} taskId - The ID of the task to update.
-     * @param {object} dataToUpdate - Object with new data { description, dueDate, field }.
-     */
+
     async function updateTask(taskId, dataToUpdate) {
         isLoading.value = true;
         error.value = null;
@@ -108,20 +88,11 @@ export const useTaskStore = defineStore('tasks', () => {
             const taskEntity = await repository.getById(taskId);
             taskEntity.updateInformation(dataToUpdate.description, dataToUpdate.dueDate, dataToUpdate.field);
             const updatedEntity = await repository.update(taskEntity);
-            const allFields = await fieldRepository.getAllFieldsDetails();
-            const fieldToUpdate = allFields.find(f => f.tasks?.some(t => t.id === taskId));
-            if (fieldToUpdate) {
-                const taskIndex = fieldToUpdate.tasks.findIndex(t => t.id === taskId);
-                if (taskIndex !== -1) {
-                    fieldToUpdate.tasks[taskIndex].task = updatedEntity.description;
-                    fieldToUpdate.tasks[taskIndex].date = updatedEntity.dueDate;
-                    await fieldRepository.updateField(fieldToUpdate.id, { tasks: fieldToUpdate.tasks });
-                }
-            }
-            await fieldRepository.updateUpcomingTask(taskId, { task: updatedEntity.description, date: updatedEntity.dueDate });
 
             const index = tasks.value.findIndex((t) => t.id === taskId);
-            if (index !== -1) tasks.value[index] = assembler.toDTO(updatedEntity);
+            if (index !== -1) {
+                tasks.value[index] = assembler.toDTO(updatedEntity);
+            }
 
         } catch (err) {
             error.value = 'Could not update task.';
@@ -132,10 +103,7 @@ export const useTaskStore = defineStore('tasks', () => {
         }
     }
 
-    /**
-     * Toggles the completion status of a task.
-     * @param {number} taskId - The ID of the task to toggle.
-     */
+
     async function toggleTaskCompletion(taskId) {
         isLoading.value = true;
         error.value = null;
@@ -160,26 +128,12 @@ export const useTaskStore = defineStore('tasks', () => {
         }
     }
 
-    /**
-     * Deletes a task.
-     * @param {number} taskId - The ID of the task to delete.
-     */
+
     async function deleteTask(taskId) {
         isLoading.value = true;
         error.value = null;
         try {
-            await Promise.all([
-                repository.delete(taskId),
-                fieldRepository.deleteUpcomingTask(taskId),
-                (async () => {
-                    const allFields = await fieldRepository.getAllFieldsDetails();
-                    const fieldToUpdate = allFields.find(f => f.tasks?.some(t => t.id === taskId));
-                    if (fieldToUpdate) {
-                        const updatedTasks = fieldToUpdate.tasks.filter(t => t.id !== taskId);
-                        await fieldRepository.updateField(fieldToUpdate.id, { tasks: updatedTasks });
-                    }
-                })()
-            ]);
+            await repository.delete(taskId);
 
             tasks.value = tasks.value.filter((t) => t.id !== taskId);
 
@@ -195,9 +149,7 @@ export const useTaskStore = defineStore('tasks', () => {
         }
     }
 
-    /**
-     * Clears the error state.
-     */
+
     function clearError() {
         error.value = null;
     }
