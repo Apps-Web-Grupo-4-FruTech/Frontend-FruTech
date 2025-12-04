@@ -1,14 +1,14 @@
 <template>
   <div class="dashboard-page">
-    <div v-if="store.isLoading" class="flex justify-content-center align-items-center h-20rem">
+    <div v-if="isLoading" class="flex justify-content-center align-items-center h-20rem">
       <ProgressSpinner />
     </div>
 
-    <div v-else-if="store.error" class="p-4">
-      <Message severity="error" :closable="false">{{ store.error }}</Message>
+    <div v-else-if="error" class="p-4">
+      <Message severity="error" :closable="false">{{ error }}</Message>
     </div>
 
-    <div v-else-if="store.dashboardData" class="grid gap-4">
+    <div v-else class="grid gap-4">
       <div class="col-12">
         <Card class="preview-fields-card">
           <template #title>
@@ -18,10 +18,18 @@
             </div>
           </template>
           <template #content>
-            <div class="field-items-container">
-              <div v-for="field in store.dashboardData.previewFields" :key="field.id" class="field-item">
-                <img :src="field.imageUrl" :alt="field.title" class="field-image">
-                <span class="field-title mt-2">{{ field.title }}</span>
+            <div v-if="userFields.length === 0" class="p-3">
+              <Message severity="info" :closable="false">{{ $t('dashboard.emptySections.fields') }}</Message>
+            </div>
+            <div v-else class="field-items-container">
+              <div v-for="field in userFields" :key="field.id" class="field-item">
+                <img
+                  :src="field.imageUrl"
+                  :alt="field.name"
+                  class="field-image"
+                  @error="handleImageError"
+                >
+                <span class="field-title mt-2">{{ field.name }}</span>
               </div>
             </div>
           </template>
@@ -33,13 +41,17 @@
           <template #title>
             <div class="flex justify-content-between align-items-center">
               <h2 class="m-0 text-xl font-semibold">{{ $t('sidebar.myTasks') }}</h2>
-                <Button :label="$t('dashboard.view_tasks')" @click="goToMyTasks" text />
-          </div></template>
+              <Button :label="$t('dashboard.view_tasks')" @click="goToMyTasks" text />
+            </div>
+          </template>
           <template #content>
-            <DataTable :value="store.dashboardData.upcomingTasks" responsiveLayout="scroll">
-              <Column field="name" :header="$t('dashboard.crop_name')"></Column>
-              <Column field="task" :header="$t('dashboard.task')"></Column>
-              <Column field="date" :header="$t('dashboard.due_date')"></Column>
+            <div v-if="upcomingTasks.length === 0" class="p-3">
+              <Message severity="info" :closable="false">{{ $t('dashboard.emptySections.tasks') }}</Message>
+            </div>
+            <DataTable v-else :value="upcomingTasks" responsiveLayout="scroll">
+              <Column field="field" :header="$t('dashboard.crop_name')"></Column>
+              <Column field="description" :header="$t('dashboard.task')"></Column>
+              <Column field="dueDate" :header="$t('dashboard.due_date')"></Column>
               <Column :header="$t('dashboard.actions')">
                 <template #body>
                   <Checkbox :binary="true" />
@@ -54,8 +66,13 @@
         <Card>
           <template #title><h2 class="m-0 text-xl font-semibold">{{ $t('dashboard.recommendatios') }}</h2></template>
           <template #content>
-            <div v-for="rec in store.dashboardData.recommendations" :key="rec.id" class="mb-3">
-              <p><strong class="font-semibold">{{ rec.title }}:</strong> {{ rec.content }}</p>
+            <div v-if="recommendations.length === 0" class="p-3">
+              <Message severity="info" :closable="false">{{ $t('dashboard.emptySections.recommendations') }}</Message>
+            </div>
+            <div v-else>
+              <div v-for="rec in recommendations" :key="rec.id" class="mb-3">
+                <p><strong class="font-semibold">{{ rec.title }}:</strong> {{ rec.content }}</p>
+              </div>
             </div>
           </template>
         </Card>
@@ -65,25 +82,72 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
-import { useDashboardStore } from '../stores/dashboard.store';
-
+import { ref, onMounted } from 'vue';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
 import ProgressSpinner from 'primevue/progressspinner';
 import Message from 'primevue/message';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import { useRouter } from 'vue-router';
 import Checkbox from 'primevue/checkbox';
+import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 
-const store = useDashboardStore();
+import { FieldApiRepository } from '@/frutech/modules/my-fields/infrastructure/field.api-repository.js';
+import { TaskApiRepository } from '@/frutech/modules/my-tasks/infrastructure/task-api.repository.js';
+
 const router = useRouter();
+const fieldRepository = new FieldApiRepository();
+const taskRepository = new TaskApiRepository();
+const { t } = useI18n();
+
+const isLoading = ref(false);
+const error = ref(null);
+
+const userFields = ref([]);
+const upcomingTasks = ref([]);
+const recommendations = ref([]);
+
+function getCurrentUserId() {
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    return user?.id;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchDashboardData() {
+  isLoading.value = true;
+  error.value = null;
+
+  try {
+    const userId = getCurrentUserId();
+    if (!userId) throw new Error(t('dashboard.errors.unauthenticated'));
+
+    const fields = await fieldRepository.getAll();
+    userFields.value = Array.isArray(fields)
+      ? fields.map(f => ({ id: f.id, name: f.name, imageUrl: f.imageUrl }))
+      : [];
+
+    const tasks = await taskRepository.getUpcomingTasks(userId, 3);
+    upcomingTasks.value = Array.isArray(tasks) ? tasks.map(t => ({
+      id: t.id,
+      description: t.description,
+      dueDate: t.dueDate,
+      field: t.field,
+      completed: t.completed
+    })) : [];
+  } catch (e) {
+    console.error(e);
+    error.value = e.message || t('dashboard.errors.loadFailed');
+  } finally {
+    isLoading.value = false;
+  }
+}
 
 onMounted(() => {
-  if (!store.dashboardData) {
-    store.fetchDashboardData();
-  }
+  fetchDashboardData();
 });
 
 const goToMyFields = () => {
@@ -92,6 +156,10 @@ const goToMyFields = () => {
 
 const goToMyTasks = () => {
   router.push('/my-tasks');
+};
+
+const handleImageError = (event) => {
+  event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YwZjBmMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=';
 };
 </script>
 
@@ -110,16 +178,15 @@ const goToMyTasks = () => {
   display: flex;
   gap: 1.5rem;
   overflow-x: auto;
-  padding-bottom: 1rem; /* Espacio para la barra de scroll */
+  padding-bottom: 1rem;
 }
 
-/* Ocultar barra de scroll pero mantener funcionalidad */
 .field-items-container::-webkit-scrollbar {
   display: none;
 }
 .field-items-container {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .field-item {
