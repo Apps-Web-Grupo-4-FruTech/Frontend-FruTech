@@ -41,7 +41,7 @@ function extractIdFromClaims(claims) {
 function isValidId(id) {
   if (id === undefined || id === null) return false;
   if (typeof id === 'number') return Number.isFinite(id);
-  if (typeof id === 'string') return id.trim().length > 0; // acepta UUID o string no vacío
+  if (typeof id === 'string') return id.trim().length > 0;
   return false;
 }
 
@@ -101,13 +101,15 @@ export class AuthApiRepository {
       const emailResp = getCI(userBody, 'email') ?? email;
       const phoneNumberRaw = getCI(userBody, 'phoneNumber');
       const identificatorRaw = getCI(userBody, 'identificator');
+      const roleIdRaw = getCI(userBody, 'roleId') ?? getCI(userBody, 'RoleId') ?? getCI(userBody, 'role_id');
       const phoneNumber = typeof phoneNumberRaw === 'string' && /^\+\d+/.test(phoneNumberRaw) ? phoneNumberRaw : '+000000000';
       const identificator = typeof identificatorRaw === 'string' && /^\d{8}$/.test(identificatorRaw) ? identificatorRaw : '00000000';
+      const roleId = roleIdRaw ? Number(roleIdRaw) : 0;
 
-      const user = new User({ id, username, email: emailResp, password: '******', phoneNumber, identificator });
+      const user = new User({ id, username, email: emailResp, password: '******', phoneNumber, identificator, roleId });
 
       if (token) localStorage.setItem('token', token); else localStorage.removeItem('token');
-      localStorage.setItem('user', JSON.stringify({ id: user.id, username: user.username, email: user.email }));
+      localStorage.setItem('user', JSON.stringify({ id: user.id, username: user.username, email: user.email, roleId: user.roleId }));
       return user;
     } catch (error) {
       throw new Error(error.message || 'Error al iniciar sesión');
@@ -118,10 +120,10 @@ export class AuthApiRepository {
    * Registro de usuario.
    * Endpoint: POST /api/v1/users/sign-up via baseURL /api
    */
-  async register({ username, email, phoneNumber, identificator, password }) {
+  async register({ username, email, phoneNumber, identificator, password, roleId }) {
     try {
       if (!email || !password) throw new Error('Email y password son requeridos');
-      const payload = { userName: username, email, phoneNumber, identificator, password };
+      const payload = { userName: username, email, phoneNumber, identificator, password, roleId };
       const response = await http.post(`${USERS_ENDPOINT}/sign-up`, payload);
       return response.data;
     } catch (error) {
