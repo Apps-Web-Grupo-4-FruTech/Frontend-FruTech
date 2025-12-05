@@ -123,29 +123,45 @@ export const useTaskStore = defineStore('tasks', () => {
 
     /**
      * Toggles the completion status of a task.
+     * Implements optimistic UI update for better UX.
      * @param {number} taskId - The ID of the task to toggle.
      */
     async function toggleTaskCompletion(taskId) {
-        isLoading.value = true;
         error.value = null;
+
+        const index = tasks.value.findIndex((t) => t.id === taskId);
+        if (index === -1) {
+            error.value = 'Task not found.';
+            return;
+        }
+
+        const taskDTO = tasks.value[index];
+        const previousCompletedState = taskDTO.completed;
+
+        tasks.value[index] = {
+            ...taskDTO,
+            completed: !previousCompletedState
+        };
+
         try {
-            const taskEntity = await repository.getById(taskId);
-            if (taskEntity.completed) {
-                taskEntity.markAsIncomplete();
-            } else {
-                taskEntity.markAsCompleted();
-            }
-            const updatedEntity = await repository.update(taskEntity);
-            const index = tasks.value.findIndex((t) => t.id === taskId);
-            if (index !== -1) {
-                tasks.value[index] = assembler.toDTO(updatedEntity);
-            }
+            const taskEntity = new Task({
+                id: taskDTO.id,
+                description: taskDTO.description,
+                dueDate: taskDTO.dueDate,
+                field: taskDTO.field,
+                completed: !previousCompletedState
+            });
+
+            await repository.updateCompletion(taskEntity);
+
         } catch (err) {
+            tasks.value[index] = {
+                ...taskDTO,
+                completed: previousCompletedState
+            };
             error.value = 'Could not toggle task completion.';
             console.error(err);
             throw err;
-        } finally {
-            isLoading.value = false;
         }
     }
 

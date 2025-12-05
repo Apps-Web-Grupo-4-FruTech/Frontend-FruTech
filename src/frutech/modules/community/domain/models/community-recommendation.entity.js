@@ -8,6 +8,7 @@
  *   comment: string,
  *   role: string (opcional)
  * }
+ * 
  */
 export class CommunityRecommendation {
   constructor(id, user, date, description, role = '') {

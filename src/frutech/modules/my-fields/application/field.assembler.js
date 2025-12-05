@@ -1,3 +1,5 @@
+import { FieldDetail } from '@/frutech/modules/my-fields/domain/model/field-detail.entity.js';
+
 /**
  * Converts an ISO date format (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss) to display format DD/MM/YYYY.
  * @param {string} isoDate - Date in ISO format
@@ -73,7 +75,7 @@ export class FieldAssembler {
    * Supports multiple property naming conventions (camelCase, snake_case, PascalCase).
    * Handles both legacy and new backend formats for progress history and crop data.
    * @param {Object} resource - Raw resource object from the API
-   * @returns {Object} Converted field model
+   * @returns {FieldDetail} Converted field model as domain entity instance
    */
   static toModel(resource) {
     if (!resource) return null;
@@ -90,95 +92,82 @@ export class FieldAssembler {
     const cropName = (typeof cropNameRaw === 'string' && cropNameRaw.trim() !== '') ? cropNameRaw : 'No Crop';
     const product = (typeof productRaw === 'string' && productRaw.trim() !== '') ? productRaw : 'No Crop';
 
-    return {
+    const progressData = resource.progressHistory ?? resource.progress_history;
+    let progressHistory = [];
+
+    if (Array.isArray(progressData)) {
+      progressHistory = progressData.map(p => ({
+        id: p.id ?? p.Id,
+        date: p.date ?? p.Date ?? new Date().toISOString(),
+        watered: isoToDisplayDate(p.watered ?? p.Watered) || '',
+        fertilized: isoToDisplayDate(p.fertilized ?? p.Fertilized) || '',
+        pests: isoToDisplayDate(p.pests ?? p.Pests) || ''
+      }));
+    } else if (progressData && typeof progressData === 'object' && !Array.isArray(progressData)) {
+      progressHistory = [{
+        id: progressData.id ?? progressData.Id,
+        date: progressData.date ?? progressData.Date ?? new Date().toISOString(),
+        watered: isoToDisplayDate(progressData.watered ?? progressData.Watered) || '',
+        fertilized: isoToDisplayDate(progressData.fertilized ?? progressData.Fertilized) || '',
+        pests: isoToDisplayDate(progressData.pests ?? progressData.Pests) || ''
+      }];
+    }
+
+    let progressHistoryId = null;
+    if (resource.progressHistoryId ?? resource.progress_history_id ?? resource.ProgressHistoryId) {
+      progressHistoryId = resource.progressHistoryId ?? resource.progress_history_id ?? resource.ProgressHistoryId;
+    } else if (progressData && typeof progressData === 'object' && !Array.isArray(progressData)) {
+      progressHistoryId = progressData.id ?? progressData.Id ?? null;
+    } else if (Array.isArray(progressData) && progressData.length > 0) {
+      const lastItem = progressData[progressData.length - 1];
+      progressHistoryId = lastItem?.id ?? lastItem?.Id ?? null;
+    }
+
+    const tasks = Array.isArray(resource.tasks)
+      ? resource.tasks.map(t => {
+          const rawDueDate = t.dueDate || t.due_date || t.DueDate || t.date;
+          return {
+            id: t.id ?? t.Id,
+            description: t.description ?? t.Description,
+            dueDate: rawDueDate,
+            date: isoToShortDate(rawDueDate),
+            completed: t.completed || t.Completed || false,
+            name: t.name ?? t.fieldName ?? t.field_name ?? '',
+            task: t.description ?? t.Description ?? t.task ?? ''
+          };
+        })
+      : [];
+
+    const rawStatus = resource.cropStatus || resource.crop_status || resource.status || resource.Status;
+    const validatedStatus = (rawStatus && typeof rawStatus === 'string' && rawStatus.trim() !== '')
+      ? rawStatus
+      : 'Disponible';
+
+    return new FieldDetail({
       id: resource.id ?? resource.Id,
       name: resource.name ?? resource.Name,
       location: resource.location ?? resource.Location,
-
       fieldSize: resource.fieldSize ?? resource.field_size ?? resource.FieldSize,
       field_size: resource.fieldSize ?? resource.field_size ?? resource.FieldSize,
-
       imageUrl: imageUrl,
-
-      status: resource.cropStatus ?? resource.crop_status ?? resource.status ?? resource.Status ?? 'Healthy',
-
+      status: validatedStatus,
       crop: cropName,
       cropName: cropName,
       product: product,
-
       soilType: resource.soilType ?? resource.soil_type ?? resource['Soil Type'] ?? '',
       sunlight: resource.sunlight ?? '',
       watering: resource.watering ?? '',
-
       plantingDate: resource.plantingDate ?? resource.planting_date ?? '',
       planting_date: resource.plantingDate ?? resource.planting_date ?? '',
-
       expectingHarvest: resource.harvestDate ?? resource.harvest_date ?? resource.expectingHarvest ?? resource.expecting_harvest ?? '',
       expecting_harvest: resource.harvestDate ?? resource.harvest_date ?? resource.expecting_harvest ?? '',
-
       daysSincePlanting: resource.daysSincePlanting ?? resource.days_since_planting ?? 0,
       days_since_planting: resource.daysSincePlanting ?? resource.days_since_planting ?? 0,
-
-      progress_history: (() => {
-        const progressData = resource.progressHistory ?? resource.progress_history;
-
-        if (Array.isArray(progressData)) {
-          return progressData.map(p => ({
-            id: p.id ?? p.Id,
-            date: p.date ?? p.Date ?? new Date().toISOString(),
-            watered: isoToDisplayDate(p.watered ?? p.Watered) || '',
-            fertilized: isoToDisplayDate(p.fertilized ?? p.Fertilized) || '',
-            pests: isoToDisplayDate(p.pests ?? p.Pests) || ''
-          }));
-        }
-
-        if (progressData && typeof progressData === 'object' && !Array.isArray(progressData)) {
-          return [{
-            id: progressData.id ?? progressData.Id,
-            date: progressData.date ?? progressData.Date ?? new Date().toISOString(),
-            watered: isoToDisplayDate(progressData.watered ?? progressData.Watered) || '',
-            fertilized: isoToDisplayDate(progressData.fertilized ?? progressData.Fertilized) || '',
-            pests: isoToDisplayDate(progressData.pests ?? progressData.Pests) || ''
-          }];
-        }
-
-        return [];
-      })(),
-
-      progressHistoryId: (() => {
-        if (resource.progressHistoryId ?? resource.progress_history_id ?? resource.ProgressHistoryId) {
-          return resource.progressHistoryId ?? resource.progress_history_id ?? resource.ProgressHistoryId;
-        }
-
-        const progressData = resource.progressHistory ?? resource.progress_history;
-
-        if (progressData && typeof progressData === 'object' && !Array.isArray(progressData)) {
-          return progressData.id ?? progressData.Id ?? null;
-        }
-
-        if (Array.isArray(progressData) && progressData.length > 0) {
-          const lastItem = progressData[progressData.length - 1];
-          return lastItem?.id ?? lastItem?.Id ?? null;
-        }
-
-        return null;
-      })(),
-
-      tasks: Array.isArray(resource.tasks)
-        ? resource.tasks.map(t => {
-            const rawDueDate = t.dueDate || t.due_date || t.DueDate || t.date;
-            return {
-              id: t.id ?? t.Id,
-              description: t.description ?? t.Description,
-              dueDate: rawDueDate,
-              date: isoToShortDate(rawDueDate),
-              completed: t.completed || t.Completed || false,
-              name: t.name ?? t.fieldName ?? t.field_name ?? '',
-              task: t.description ?? t.Description ?? t.task ?? ''
-            };
-          })
-        : []
-    };
+      progressHistory: progressHistory,
+      progress_history: progressHistory,
+      progressHistoryId: progressHistoryId,
+      tasks: tasks
+    });
   }
 
   static toModels(resources) {
